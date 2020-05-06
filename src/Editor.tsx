@@ -3,7 +3,7 @@ import React, { useState, useRef } from "react";
 import { useRouteMatch } from "react-router-dom";
 import { getExampleRef } from "./firebase";
 import { parseMD, Content } from "./md";
-import { renderDiagram } from "./diagrams";
+import { SequenceDiagram } from "./diagrams";
 
 declare var Firepad: any;
 
@@ -33,26 +33,20 @@ function render($: Content, key: number = 0): any {
   } else if ($.type === "code") {
     if ($.language == "sequence") {
       return (
-        <pre
+        <SequenceDiagram
           key={key}
-          ref={(el) => {
-            if (el && $.text) {
-              el.innerText = "";
-              try {
-                renderDiagram(el, $.text);
-              } catch (e) {
-                el.innerText = e.toString();
-              }
-            }
-          }}
-        ></pre>
+          input={$.text!}
+        />
       );
     }
     return <pre key={key}>{$.text}</pre>;
+  } else if ($.type === "text") {
+    return <p key={key}>{$.text}</p>;
   } else {
     return <pre key={key}>{JSON.stringify($, null, 2)}</pre>;
   }
 }
+
 
 export function Editor() {
   const editorRef = useRef<any>();
@@ -85,7 +79,7 @@ export function Editor() {
           loading={<div>Loading editor...</div>}
           value={""}
           editorDidMount={handleEditorDidMount}
-          options={{ lineNumbers: "on" }}
+          options={{ lineNumbers: "on", minimap: { enabled: false } }}
         />
       </div>
       <div className="content">{c}</div>

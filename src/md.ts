@@ -72,7 +72,7 @@ function readWS() {
 
 function readBlock(): CodeBlock | null {
   const initialPosition = currentPosition;
-  const codeOpening = /^```(\S*)$/;
+  const codeOpening = /^```(.*)$/;
   const codeClosing = /^```$/;
   const line = eatLine();
 

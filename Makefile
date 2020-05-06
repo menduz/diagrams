@@ -10,7 +10,6 @@ $(WEBAPP): $(WEBAPP_SOURCES) $(WEBAPP_SOURCES_TSX) docs/firepad/firepad.css
 
 build: $(WEBAPP)
 
-
 watch: $(WEBAPP)
 	@./node_modules/.bin/concurrently \
 		-n "rollup,server" \
