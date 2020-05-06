@@ -1,11 +1,24 @@
 import Monaco from "@monaco-editor/react";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouteMatch } from "react-router-dom";
 import { getExampleRef } from "./firebase";
 import { parseMD, Content } from "./md";
 import { SequenceDiagram } from "./diagrams";
 
 declare var Firepad: any;
+declare var monaco: any;
+
+function Code($: { language: string; code: string }) {
+  const [coloredCode, setColoredCode] = useState($.code);
+
+  useEffect(() => {
+    monaco.editor
+      .colorize($.code, $.language)
+      .then((html: string) => setColoredCode(html));
+  }, [$.code, $.language]);
+
+  return <pre dangerouslySetInnerHTML={{ __html: coloredCode }}></pre>;
+}
 
 function render($: Content, key: number = 0): any {
   if ($.type === "title") {
@@ -32,21 +45,15 @@ function render($: Content, key: number = 0): any {
     );
   } else if ($.type === "code") {
     if ($.language == "sequence") {
-      return (
-        <SequenceDiagram
-          key={key}
-          input={$.text!}
-        />
-      );
+      return <SequenceDiagram key={key} input={$.text!} />;
     }
-    return <pre key={key}>{$.text}</pre>;
+    return <Code key={key} language={$.language} code={$.text!} />;
   } else if ($.type === "text") {
     return <p key={key}>{$.text}</p>;
   } else {
     return <pre key={key}>{JSON.stringify($, null, 2)}</pre>;
   }
 }
-
 
 export function Editor() {
   const editorRef = useRef<any>();
@@ -58,15 +65,20 @@ export function Editor() {
   const [, setIsEditorReady] = useState(false);
 
   function handleEditorDidMount(_getEditorValue: any, editor: any) {
-    const firepadRef = getExampleRef(match.params.notepadId);
     editorRef.current = editor;
     setIsEditorReady(true);
-    Firepad.fromMonaco(firepadRef, editor);
-    editorRef.current!.onDidChangeModelContent((ev: any) => {
-      const x = parseMD(editorRef.current.getValue());
-      setMd(x);
-    });
   }
+
+  useEffect(() => {
+    if (editorRef.current) {
+      const firepadRef = getExampleRef(match.params.notepadId);
+      Firepad.fromMonaco(firepadRef, editorRef.current);
+      editorRef.current!.onDidChangeModelContent((ev: any) => {
+        const x = parseMD(editorRef.current.getValue());
+        setMd(x);
+      });
+    }
+  }, [editorRef.current, match.params.notepadId]);
 
   const c = md.map(render);
 
