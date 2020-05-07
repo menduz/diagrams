@@ -8,7 +8,9 @@ docs/firepad/firepad.css:
 $(WEBAPP): $(WEBAPP_SOURCES) $(WEBAPP_SOURCES_TSX) docs/firepad/firepad.css
 	./node_modules/.bin/rollup -c --environment BUILD:production
 
-build: $(WEBAPP)
+build:
+	rm $(WEBAPP)
+	$(MAKE) $(WEBAPP)
 
 watch: $(WEBAPP)
 	@./node_modules/.bin/concurrently \

@@ -4,6 +4,7 @@ import { useRouteMatch } from "react-router-dom";
 import { getExampleRef } from "./firebase";
 import { parseMD, Content } from "./md";
 import { SequenceDiagram } from "./diagrams";
+import { DEFAULT_EXAMPLE } from "./example";
 
 declare var Firepad: any;
 declare var monaco: any;
@@ -13,7 +14,7 @@ function Code($: { language: string; code: string }) {
 
   useEffect(() => {
     monaco.editor
-      .colorize($.code, $.language)
+      .colorize($.code || "", $.language)
       .then((html: string) => setColoredCode(html));
   }, [$.code, $.language]);
 
@@ -45,7 +46,7 @@ function render($: Content, key: number = 0): any {
     );
   } else if ($.type === "code") {
     if ($.language == "sequence") {
-      return <SequenceDiagram key={key} input={$.text!} />;
+      return <SequenceDiagram key={key} input={$.text||''} />;
     }
     return <Code key={key} language={$.language} code={$.text!} />;
   } else if ($.type === "text") {
@@ -55,8 +56,13 @@ function render($: Content, key: number = 0): any {
   }
 }
 
+function Users(props: { users: any }) {
+  return <></>;
+}
+
 export function Editor() {
   const editorRef = useRef<any>();
+  const [firebaseRef, setFirebaseRef] = useState<any>(null);
   const [md, setMd] = useState<Content[]>([]);
   const match = useRouteMatch<{ notepadId: string }>();
 
@@ -67,23 +73,32 @@ export function Editor() {
   function handleEditorDidMount(_getEditorValue: any, editor: any) {
     editorRef.current = editor;
     setIsEditorReady(true);
+
+    editorRef.current!.onDidChangeModelContent((ev: any) => {
+      const x = parseMD(editorRef.current.getValue());
+      setMd(x);
+    });
   }
 
   useEffect(() => {
+    setFirebaseRef(getExampleRef(match.params.notepadId));
+
+
+  }, [match.params.notepadId]);
+
+  useEffect(() => {
     if (editorRef.current) {
-      const firepadRef = getExampleRef(match.params.notepadId);
-      Firepad.fromMonaco(firepadRef, editorRef.current);
-      editorRef.current!.onDidChangeModelContent((ev: any) => {
-        const x = parseMD(editorRef.current.getValue());
-        setMd(x);
-      });
+      Firepad.fromMonaco(firebaseRef, editorRef.current, {defaultText: DEFAULT_EXAMPLE});
     }
-  }, [editorRef.current, match.params.notepadId]);
+  }, [editorRef.current, firebaseRef]);
 
   const c = md.map(render);
 
   return (
     <>
+      <div className="tools">
+        {firebaseRef && <Users users={firebaseRef.child("users")} />}
+      </div>
       <div className="editor">
         <Monaco
           theme={theme}
