@@ -7,7 +7,7 @@ async function main() {
   await addFirebase();
   await addFirepad();
   await initializeDiagrams();
-  initUI(document.getElementById('app')!);
+  initUI(document.getElementById("app")!);
 }
 
 main().catch((e) => {

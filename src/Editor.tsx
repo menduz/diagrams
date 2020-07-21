@@ -5,6 +5,7 @@ import { getExampleRef } from "./firebase";
 import { parseMD, Content } from "./md";
 import { SequenceDiagram } from "./diagrams";
 import { DEFAULT_EXAMPLE } from "./example";
+import { renderGraphviz } from "./VizWorker";
 
 declare var Firepad: any;
 declare var monaco: any;
@@ -19,6 +20,28 @@ function Code($: { language: string; code: string }) {
   }, [$.code, $.language]);
 
   return <pre dangerouslySetInnerHTML={{ __html: coloredCode }}></pre>;
+}
+
+function Dot(props: { code: string }) {
+  const [html, setHtml] = useState("Loading...");
+  const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    renderGraphviz(props.code)
+      .then(($) => {
+        setError("");
+        setHtml($);
+      })
+      .catch((e) => {
+        setError(e.message);
+      });
+  }, [props.code]);
+
+  if (error) {
+    return <pre>{error}</pre>;
+  }
+
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 function render($: Content, key: number = 0): any {
@@ -46,7 +69,9 @@ function render($: Content, key: number = 0): any {
     );
   } else if ($.type === "code") {
     if ($.language == "sequence") {
-      return <SequenceDiagram key={key} input={$.text||''} />;
+      return <SequenceDiagram key={key} input={$.text || ""} />;
+    } else if ($.language == "dot") {
+      return <Dot key={key} code={$.text || ""} />;
     }
     return <Code key={key} language={$.language} code={$.text!} />;
   } else if ($.type === "text") {
@@ -82,13 +107,13 @@ export function Editor() {
 
   useEffect(() => {
     setFirebaseRef(getExampleRef(match.params.notepadId));
-
-
   }, [match.params.notepadId]);
 
   useEffect(() => {
     if (editorRef.current) {
-      Firepad.fromMonaco(firebaseRef, editorRef.current, {defaultText: DEFAULT_EXAMPLE});
+      Firepad.fromMonaco(firebaseRef, editorRef.current, {
+        defaultText: DEFAULT_EXAMPLE,
+      });
     }
   }, [editorRef.current, firebaseRef]);
 
