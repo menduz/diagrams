@@ -92,13 +92,21 @@ function Users(props: { users: any }) {
 
 export function Editor(props: { readonly?: boolean }) {
   const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor>();
+  const [fullscreen, setFullscreen] = useState<boolean>(
+    props.readonly || false
+  );
   const [firebaseRef, setFirebaseRef] = useState<any>(null);
   const [firepad, setFirepad] = useState<any>(null);
-  const [fullscreen, setFullscreen] = useState<boolean>(false);
   const [md, setMd] = useState<Content[]>([]);
   const match = useRouteMatch<{ notepadId: string }>();
   const location = useLocation();
-  const qs = new URLSearchParams(location.search);
+
+  const [staticContent, setStaticContent] = useState<string>();
+
+  useEffect(() => {
+    const qs = new URLSearchParams(location.search);
+    setStaticContent(qs.get("t") || "");
+  }, [location.search]);
 
   const theme = "light";
   const language = "markdown";
@@ -117,7 +125,6 @@ export function Editor(props: { readonly?: boolean }) {
   useEffect(() => {
     if (!props.readonly) {
       setFirebaseRef(getExampleRef(match.params.notepadId));
-      console.log(`Loading notepad ${match.params.notepadId}`);
     } else {
       setFirebaseRef(null);
     }
@@ -139,18 +146,14 @@ export function Editor(props: { readonly?: boolean }) {
         );
       } else if (props.readonly) {
         setFirepad(null);
-        editorRef.current.setValue(qs.get("t") || "<Empty>");
+        editorRef.current.setValue(staticContent || "<Empty>");
       }
     }
-  }, [editorRef.current, firebaseRef]);
-
-  useEffect(() => {
-    console.log(`New firepad instance`, firepad);
-  }, [firepad]);
+  }, [editorRef.current, firebaseRef, staticContent]);
 
   useEffect(() => {
     if (editorRef.current) {
-      editorRef.current.render(true);
+      editorRef.current.layout();
     }
   }, [fullscreen]);
 
@@ -172,6 +175,7 @@ export function Editor(props: { readonly?: boolean }) {
             lineNumbers: "on",
             minimap: { enabled: false },
             readOnly: !!props.readonly,
+            automaticLayout: true
           }}
         />
       </div>
