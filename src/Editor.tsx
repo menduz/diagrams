@@ -6,7 +6,8 @@ import { getExampleRef } from "./firebase";
 import { parseMD, Content } from "./md";
 import { SequenceDiagram } from "./diagrams";
 import { DEFAULT_EXAMPLE } from "./example";
-import { renderGraphviz } from "./VizWorker";
+// import { renderGraphviz } from "./VizWorker";
+import {graphviz} from '@hpcc-js/wasm'
 import UseAnimations from "react-useanimations";
 
 import skipForward from "react-useanimations/lib/skipForward";
@@ -32,7 +33,7 @@ function Dot(props: { code: string }) {
   const [error, setError] = useState<string>();
 
   useEffect(() => {
-    renderGraphviz(props.code)
+    graphviz.dot(props.code, "svg", {wasmFolder: "wasm"})
       .then(($) => {
         setError("");
         setHtml($);
