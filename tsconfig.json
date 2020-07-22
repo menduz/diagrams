@@ -9,7 +9,6 @@
     "moduleResolution": "node",
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
-    "noUnusedLocals": true,
     "useDefineForClassFields": false,
     "jsx": "react",
     "noImplicitThis": true,

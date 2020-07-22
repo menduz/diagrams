@@ -11,9 +11,9 @@ function HomeScreen() {
   }
 
   return (
-    <>
+    <div className="home">
       <button onClick={newNotebook}>New notebook</button>
-    </>
+    </div>
   );
 }
 

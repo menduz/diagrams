@@ -6,6 +6,7 @@ import json from "rollup-plugin-json";
 import { terser } from "rollup-plugin-terser";
 import replace from "rollup-plugin-replace";
 import { string } from "rollup-plugin-string";
+import scss from 'rollup-plugin-scss'
 
 const PROD = process.env.BUILD === "production";
 
@@ -47,6 +48,7 @@ const plugins = [
   PROD && terser({}),
   globals({}),
   json(),
+  scss()
 ];
 
 const banner = `/*! Menduz diagrams */

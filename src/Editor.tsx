@@ -1,4 +1,5 @@
 import Monaco from "@monaco-editor/react";
+import type * as monacoEditor from "monaco-editor/esm/vs/editor/editor.api";
 import React, { useState, useRef, useEffect } from "react";
 import { useRouteMatch } from "react-router-dom";
 import { getExampleRef } from "./firebase";
@@ -6,16 +7,20 @@ import { parseMD, Content } from "./md";
 import { SequenceDiagram } from "./diagrams";
 import { DEFAULT_EXAMPLE } from "./example";
 import { renderGraphviz } from "./VizWorker";
+import UseAnimations from "react-useanimations";
+
+import skipForward from "react-useanimations/lib/skipForward";
+import skipBack from "react-useanimations/lib/skipBack";
 
 declare var Firepad: any;
-declare var monaco: any;
+declare var monaco: typeof monacoEditor;
 
 function Code($: { language: string; code: string }) {
   const [coloredCode, setColoredCode] = useState($.code);
 
   useEffect(() => {
     monaco.editor
-      .colorize($.code || "", $.language)
+      .colorize($.code || "", $.language, { tabSize: 2 })
       .then((html: string) => setColoredCode(html));
   }, [$.code, $.language]);
 
@@ -86,8 +91,10 @@ function Users(props: { users: any }) {
 }
 
 export function Editor() {
-  const editorRef = useRef<any>();
+  const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor>();
   const [firebaseRef, setFirebaseRef] = useState<any>(null);
+  const [firepad, setFirepad] = useState<any>(null);
+  const [fullscreen, setFullscreen] = useState<boolean>(false);
   const [md, setMd] = useState<Content[]>([]);
   const match = useRouteMatch<{ notepadId: string }>();
 
@@ -99,31 +106,48 @@ export function Editor() {
     editorRef.current = editor;
     setIsEditorReady(true);
 
-    editorRef.current!.onDidChangeModelContent((ev: any) => {
-      const x = parseMD(editorRef.current.getValue());
+    editorRef.current!.onDidChangeModelContent((ev) => {
+      const x = parseMD(editorRef.current!.getValue());
       setMd(x);
     });
   }
 
   useEffect(() => {
     setFirebaseRef(getExampleRef(match.params.notepadId));
+    console.log(`Loading notepad ${match.params.notepadId}`);
   }, [match.params.notepadId]);
 
   useEffect(() => {
     if (editorRef.current) {
-      Firepad.fromMonaco(firebaseRef, editorRef.current, {
-        defaultText: DEFAULT_EXAMPLE,
-      });
+      if (firepad) {
+        firepad.dispose();
+        editorRef.current.setValue("");
+      }
+      setFirepad(
+        Firepad.fromMonaco(firebaseRef, editorRef.current, {
+          defaultText: DEFAULT_EXAMPLE,
+        })
+      );
     }
   }, [editorRef.current, firebaseRef]);
+
+  useEffect(() => {
+    console.log(`New firepad instance`, firepad);
+  }, [firepad]);
+
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.render(true);
+    }
+  }, [fullscreen]);
 
   const c = md.map(render);
 
   return (
-    <>
-      <div className="tools">
+    <div className={fullscreen ? "fullscreen" : ""}>
+      {/* <div className="tools">
         {firebaseRef && <Users users={firebaseRef.child("users")} />}
-      </div>
+      </div> */}
       <div className="editor">
         <Monaco
           theme={theme}
@@ -134,7 +158,22 @@ export function Editor() {
           options={{ lineNumbers: "on", minimap: { enabled: false } }}
         />
       </div>
-      <div className="content">{c}</div>
-    </>
+      <div className="content">
+        <div className="content-bar">
+          <UseAnimations
+            animation={fullscreen ? skipForward : skipBack}
+            size={32}
+            wrapperStyle={{ margin: "8px" }}
+            strokeColor="#586069"
+            onClick={() => {
+              setFullscreen(!fullscreen);
+            }}
+          />
+        </div>
+        <div className="scroll">
+          <div className="markdown-body">{c}</div>
+        </div>
+      </div>
+    </div>
   );
 }
