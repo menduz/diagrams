@@ -1,7 +1,7 @@
 import Monaco from "@monaco-editor/react";
 import type * as monacoEditor from "monaco-editor/esm/vs/editor/editor.api";
 import React, { useState, useRef, useEffect } from "react";
-import { useRouteMatch } from "react-router-dom";
+import { useRouteMatch, useParams, useLocation } from "react-router-dom";
 import { getExampleRef } from "./firebase";
 import { parseMD, Content } from "./md";
 import { SequenceDiagram } from "./diagrams";
@@ -90,13 +90,15 @@ function Users(props: { users: any }) {
   return <></>;
 }
 
-export function Editor() {
+export function Editor(props: { readonly?: boolean }) {
   const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor>();
   const [firebaseRef, setFirebaseRef] = useState<any>(null);
   const [firepad, setFirepad] = useState<any>(null);
   const [fullscreen, setFullscreen] = useState<boolean>(false);
   const [md, setMd] = useState<Content[]>([]);
   const match = useRouteMatch<{ notepadId: string }>();
+  const location = useLocation();
+  const qs = new URLSearchParams(location.search);
 
   const theme = "light";
   const language = "markdown";
@@ -113,8 +115,12 @@ export function Editor() {
   }
 
   useEffect(() => {
-    setFirebaseRef(getExampleRef(match.params.notepadId));
-    console.log(`Loading notepad ${match.params.notepadId}`);
+    if (!props.readonly) {
+      setFirebaseRef(getExampleRef(match.params.notepadId));
+      console.log(`Loading notepad ${match.params.notepadId}`);
+    } else {
+      setFirebaseRef(null);
+    }
   }, [match.params.notepadId]);
 
   useEffect(() => {
@@ -123,11 +129,18 @@ export function Editor() {
         firepad.dispose();
         editorRef.current.setValue("");
       }
-      setFirepad(
-        Firepad.fromMonaco(firebaseRef, editorRef.current, {
-          defaultText: DEFAULT_EXAMPLE,
-        })
-      );
+
+      if (firebaseRef) {
+        editorRef.current.setValue("");
+        setFirepad(
+          Firepad.fromMonaco(firebaseRef, editorRef.current, {
+            defaultText: DEFAULT_EXAMPLE,
+          })
+        );
+      } else if (props.readonly) {
+        setFirepad(null);
+        editorRef.current.setValue(qs.get("t") || "<Empty>");
+      }
     }
   }, [editorRef.current, firebaseRef]);
 
@@ -155,7 +168,11 @@ export function Editor() {
           loading={<div>Loading editor...</div>}
           value={""}
           editorDidMount={handleEditorDidMount}
-          options={{ lineNumbers: "on", minimap: { enabled: false } }}
+          options={{
+            lineNumbers: "on",
+            minimap: { enabled: false },
+            readOnly: !!props.readonly,
+          }}
         />
       </div>
       <div className="content">

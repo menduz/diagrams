@@ -11,8 +11,8 @@ function HomeScreen() {
   }
 
   return (
-    <div className="home">
-      <button onClick={newNotebook}>New notebook</button>
+    <div className="home markdown-content">
+      <button onClick={newNotebook}>Click here to create a new notebook</button>
     </div>
   );
 }
@@ -24,6 +24,9 @@ export function App() {
         <Switch>
           <Route exact path="/editor/:notepadId">
             <Editor />
+          </Route>
+          <Route exact path="/static">
+            <Editor readonly />
           </Route>
           <Route path="/">
             <HomeScreen />
