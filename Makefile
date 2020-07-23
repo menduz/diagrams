@@ -16,7 +16,7 @@ install:
 	npm install
 
 build: docs/wasm/graphviz.wasm
-	rm $(WEBAPP)
+	rm $(WEBAPP) || true
 	$(MAKE) $(WEBAPP)
 
 watch: $(WEBAPP)

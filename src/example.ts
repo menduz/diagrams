@@ -103,6 +103,10 @@ console.log(generateStaticLink(content));
 - Sequence diagrams parser & syntax: https://bramp.github.io/js-sequence-diagrams/
 - Firepad: https://github.com/FirebaseExtended/firepad
 
+### Contact & feedback
+
+You can contact me on https://twitter.com/@menduz
+
 ### Help me pay the hosting
 
 If you want to help with the expenses of the site, here is my Ethereum address, anything you send is more than welcome:
