@@ -1,5 +1,5 @@
 /*! Menduz diagrams */
-const buildInformation={date:"2020-07-23T13:59:12.554Z",commit:"HEAD",ref:"?"};!function(){"use strict";function unwrapExports(e){return e&&e.__esModule&&Object.prototype.hasOwnProperty.call(e,"default")?e.default:e}function createCommonjsModule(e,t){return e(t={exports:{}},t.exports),t.exports}function getCjsExportFromNamespace(e){return e&&e.default||e}
+const buildInformation={date:"2020-07-23T15:41:41.103Z",commit:"HEAD",ref:"?"};!function(){"use strict";function unwrapExports(e){return e&&e.__esModule&&Object.prototype.hasOwnProperty.call(e,"default")?e.default:e}function createCommonjsModule(e,t){return e(t={exports:{}},t.exports),t.exports}function getCjsExportFromNamespace(e){return e&&e.default||e}
 /*
 	object-assign
 	(c) Sindre Sorhus
