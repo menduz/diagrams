@@ -1,5 +1,6 @@
 import { injectScript } from "./helpers";
 import React, { useEffect, useRef, useState } from "react";
+import { DownloadSvg } from "./components/DownloadSvg";
 
 const font = '14px Menlo, Monaco, "Courier New", monospace';
 
@@ -386,7 +387,7 @@ function TextBox($: {
   var h = $.box.height - 2 * $.margin;
 
   // Draw inner box
-  const rect = <Rect x={x} y={y} width={w} height={h} />;
+  const rect = <Rect x={x} y={y} width={w} height={h} />
   // Draw text (in the center)
   if ($.align == ALIGN_CENTER) {
     x = getCenterX($.box);
@@ -399,7 +400,7 @@ function TextBox($: {
   return (
     <>
       {rect}
-      <Text x={x} y={y} text={$.text} font={$.font} align={$.align} />;
+      <Text x={x} y={y} text={$.text} font={$.font} align={$.align} />
     </>
   );
 }
@@ -620,33 +621,35 @@ function RenderDiagram(props: { diagram: ParsedDiagram | null }) {
   });
 
   return (
-    <svg width={$.width | 0} height={$.height | 0}>
-      <defs>
-        <marker
-          viewBox="0 0 5 5"
-          markerWidth="5"
-          markerHeight="5"
-          orient="auto"
-          refX="5"
-          refY="2.5"
-          id="markerArrowBlock"
-        >
-          <path d="M 0 0 L 5 2.5 L 0 5 z"></path>
-        </marker>
-        <marker
-          viewBox="0 0 9.6 16"
-          markerWidth="4"
-          markerHeight="16"
-          orient="auto"
-          refX="9.6"
-          refY="8"
-          id="markerArrowOpen"
-        >
-          <path d="M 9.6,8 1.92,16 0,13.7 5.76,8 0,2.286 1.92,0 9.6,8 z"></path>
-        </marker>
-      </defs>
-      {elems}
-    </svg>
+    <DownloadSvg>
+      <svg width={$.width | 0} height={$.height | 0} xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker
+            viewBox="0 0 5 5"
+            markerWidth="5"
+            markerHeight="5"
+            orient="auto"
+            refX="5"
+            refY="2.5"
+            id="markerArrowBlock"
+          >
+            <path d="M 0 0 L 5 2.5 L 0 5 z"></path>
+          </marker>
+          <marker
+            viewBox="0 0 9.6 16"
+            markerWidth="4"
+            markerHeight="16"
+            orient="auto"
+            refX="9.6"
+            refY="8"
+            id="markerArrowOpen"
+          >
+            <path d="M 9.6,8 1.92,16 0,13.7 5.76,8 0,2.286 1.92,0 9.6,8 z"></path>
+          </marker>
+        </defs>
+        {elems}
+      </svg>
+    </DownloadSvg>
   );
 }
 

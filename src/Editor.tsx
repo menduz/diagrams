@@ -21,6 +21,7 @@ import UseAnimations from "react-useanimations";
 import skipForward from "react-useanimations/lib/skipForward";
 import skipBack from "react-useanimations/lib/skipBack";
 import { navigateTo } from "./Nav";
+import { DownloadSvg } from "./components/DownloadSvg";
 declare var Firepad: any;
 declare var monaco: typeof monacoEditor;
 
@@ -55,7 +56,8 @@ function Dot(props: { code: string }) {
   return (
     <>
       {error && <pre>{error}</pre>}
-      <div dangerouslySetInnerHTML={{ __html: html }} />
+
+      <DownloadSvg dangerouslySetInnerHTML={{ __html: html }} />
     </>
   );
 }
