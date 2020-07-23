@@ -98,6 +98,11 @@ function generateStaticLink(content) {
 console.log(generateStaticLink(content));
 \`\`\`
 
+### Attributions
+
+- Sequence diagrams parser & syntax: https://bramp.github.io/js-sequence-diagrams/
+- Firepad: https://github.com/FirebaseExtended/firepad
+
 ### Help me pay the hosting
 
 If you want to help with the expenses of the site, here is my Ethereum address, anything you send is more than welcome:
