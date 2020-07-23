@@ -1,21 +1,9 @@
 import React from "react";
-import { Router, Route, Switch } from "react-router-dom";
+import { Router, Route, Switch, Redirect } from "react-router-dom";
 import { history, navigateTo } from "./Nav";
 import { Editor } from "./Editor";
-import { getExampleRef } from "./firebase";
-
-function HomeScreen() {
-  function newNotebook() {
-    const ref = getExampleRef();
-    navigateTo(`/editor/${ref}`);
-  }
-
-  return (
-    <div className="home markdown-content">
-      <button onClick={newNotebook}>Click here to create a new notebook</button>
-    </div>
-  );
-}
+import { generateStaticLinkFragment } from "./helpers";
+import { DEFAULT_EXAMPLE } from "./example";
 
 export function App() {
   return (
@@ -29,7 +17,9 @@ export function App() {
             <Editor readonly />
           </Route>
           <Route path="/">
-            <HomeScreen />
+            <Redirect
+              to={generateStaticLinkFragment(DEFAULT_EXAMPLE) + "&open=true"}
+            />
           </Route>
         </Switch>
       </Router>

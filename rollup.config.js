@@ -6,7 +6,7 @@ import json from "rollup-plugin-json";
 import { terser } from "rollup-plugin-terser";
 import replace from "rollup-plugin-replace";
 import { string } from "rollup-plugin-string";
-import scss from 'rollup-plugin-scss'
+import scss from "rollup-plugin-scss";
 
 const PROD = process.env.BUILD === "production";
 
@@ -39,16 +39,34 @@ const plugins = [
         "useEffect",
         "useState",
         "useRef",
+        "useContext",
+        "useMemo",
+        "useDebugValue",
+        "useCallback",
+        "useLayoutEffect",
+        "PureComponent",
+        "createContext",
       ],
-      "react-dom": ["render"],
-      "react-is": ["isValidElementType"],
+      "prop-types": [
+        "object",
+        "func",
+        "oneOfType",
+        "node",
+        "bool",
+        "any",
+        "arrayOf",
+        "string",
+      ],
+      "react-dom": ["render", "createPortal"],
+      "react-is": ["isValidElementType", "isElement", "typeOf"],
+      "@monaco-editor/react": ["monaco"],
     },
   }),
 
   PROD && terser({}),
   globals({}),
   json(),
-  scss()
+  scss(),
 ];
 
 const banner = `/*! Menduz diagrams */

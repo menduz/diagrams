@@ -31,20 +31,18 @@ export async function addFirebase() {
   firebase.initializeApp(firebaseConfig);
   firebase.analytics();
 
-  console.log(
-    await new Promise<any>((resolve, reject) => {
-      const unsubscribe = firebase.auth().onAuthStateChanged(
-        (user: any) => {
-          unsubscribe();
-          resolve(user);
-        },
-        (e: any) => {
-          console.error(e);
-          reject("API Failed");
-        }
-      );
-    })
-  );
+  await new Promise<any>((resolve, reject) => {
+    const unsubscribe = firebase.auth().onAuthStateChanged(
+      (user: any) => {
+        unsubscribe();
+        resolve(user);
+      },
+      (e: any) => {
+        console.error(e);
+        reject("API Failed");
+      }
+    );
+  });
 }
 // Helper to get hash from end of URL or generate a random one.
 export function getExampleRef(currentRef?: string) {
@@ -53,7 +51,6 @@ export function getExampleRef(currentRef?: string) {
     ref = ref.child(currentRef);
   } else {
     ref = ref.push(); // generate unique location.
-    return ref.key; // add it as a hash to the URL.
   }
   if (typeof console !== "undefined") {
     console.log("Firebase data: ", ref.toString());

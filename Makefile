@@ -12,6 +12,9 @@ docs/wasm/graphviz.wasm:
 $(WEBAPP): $(WEBAPP_SOURCES) $(WEBAPP_SOURCES_TSX) docs/firepad/firepad.css docs/wasm/graphviz.wasm
 	./node_modules/.bin/rollup -c --environment BUILD:production
 
+install:
+	npm install
+
 build: docs/wasm/graphviz.wasm
 	rm $(WEBAPP)
 	$(MAKE) $(WEBAPP)

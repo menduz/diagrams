@@ -4,12 +4,14 @@ body {
   text-rendering: geometricPrecision;
 }
 
-
+:root {
+  --sidebar: 40vw;
+}
 
 .content {
   position: absolute;
   top: 0;
-  left: 30vw;
+  left: var(--sidebar);
   bottom: 0;
   right: 0;
   overflow: hidden;
@@ -47,7 +49,7 @@ body {
   position: absolute;
   top: 0px;
   left: 0;
-  right: 70vw;
+  right: calc(100vw - var(--sidebar));
   height: 48px;
   border-bottom: 1px solid #dbdbda;
 }
@@ -58,7 +60,7 @@ body {
   top: 0;
   left: 0;
   bottom: 0;
-  right: 70vw;
+  right: calc(100vw - var(--sidebar));
 }
 
 

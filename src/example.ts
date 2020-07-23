@@ -1,15 +1,58 @@
 export const DEFAULT_EXAMPLE = `
-# This is a title
+# Collaborative diagrams tool
 
-## This is a sequence diagram
+## This editor works with live collaboration, like Google Docs
 
-Use them as markdown codw with "sequence" as language.
+Once you get an editable link, you can share it, and multiple users can edit the same document.
+
+We use it for architecture discussions and planning with my team, it helps a lot because now that all of us are remote.
+
+## How to use it?
+
+1. Click in "Make a copy" in the top bar
+2. Edit the document created for you! Share the link to start collaborating.
+
+## What can we do with this tool?
+
+### Sequence diagrams
 
 \`\`\`sequence
 Andrew->China: Says Hello
 Note right of China: China thinks about it
 China-->Andrew: How are you?
 Andrew->>China: I am good thanks!
+\`\`\`
+
+### Graphviz
+
+\`\`\`dot
+digraph G {
+
+	subgraph cluster_0 {
+		style=filled;
+		color=lightgrey;
+		node [style=filled,color=white];
+		a0 -> a1 -> a2 -> a3;
+		label = "process #1";
+	}
+
+	subgraph cluster_1 {
+		node [style=filled];
+		b0 -> b1 -> b2 -> b3;
+		label = "process #2";
+		color=blue
+	}
+	start -> a0;
+	start -> b0;
+	a1 -> b3;
+	b2 -> a3;
+	a3 -> a0;
+	a3 -> end;
+	b3 -> end;
+
+	start [shape=Mdiamond];
+	end [shape=Msquare];
+}
 \`\`\`
 
 ### This is another title with a sequence diagram
@@ -44,20 +87,25 @@ Note right of A: By listing the participants you can change their order
 ### Code example:
 
 \`\`\`csharp
-using BenchmarkDotNet.Running;
+// this example generates a static link to use with this site
 
-namespace Google.Protobuf.Benchmarks
-{
-    class Program
-    {
-        // typical usage: dotnet run -c Release -f netcoreapp2.1
-        // (this can profile both .net core and .net framework; for some reason
-        // if you start from "-f net461", it goes horribly wrong)
-        public static void Main(string[] args)
-        {
-            BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
-        }
-    }
+const content = "# this is a title\\n .. put sequences, .dot files or markdown in here ..";
+
+function generateStaticLink(content) {
+  return \`https://diagrams.menduz.com/#/static?t=\${encodeURIComponent(content)}\`;
 }
+
+console.log(generateStaticLink(content));
 \`\`\`
+
+### Help me pay the hosting
+
+If you want to help with the expenses of the site, here is my Ethereum address, anything you send is more than welcome:
+
+\`\`\`
+menduz.eth - 0xf2f58ed9Ab3057838d88D06be8269270cDc8Aa89
+\`\`\`
+
+Thanks and enjoy!
+
 `
