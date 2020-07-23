@@ -387,7 +387,7 @@ function TextBox($: {
   var h = $.box.height - 2 * $.margin;
 
   // Draw inner box
-  const rect = <Rect x={x} y={y} width={w} height={h} />
+  const rect = <Rect x={x} y={y} width={w} height={h} />;
   // Draw text (in the center)
   if ($.align == ALIGN_CENTER) {
     x = getCenterX($.box);
@@ -622,7 +622,11 @@ function RenderDiagram(props: { diagram: ParsedDiagram | null }) {
 
   return (
     <DownloadSvg>
-      <svg width={$.width | 0} height={$.height | 0} xmlns="http://www.w3.org/2000/svg">
+      <svg
+        width={$.width | 0}
+        height={$.height | 0}
+        xmlns="http://www.w3.org/2000/svg"
+      >
         <defs>
           <marker
             viewBox="0 0 5 5"
@@ -664,7 +668,9 @@ export function SequenceDiagram(props: { input: string; className?: string }) {
 
   useEffect(() => {
     try {
-      const tmpDiagram = Diagram.parse(input);
+      const tmpDiagram = Diagram.parse(
+        input.trim().replace(/^sequenceDiagram[\s\n\r]*/, "")
+      );
       layout(tmpDiagram);
       setWidth(tmpDiagram.width);
       setHeight(tmpDiagram.height);
