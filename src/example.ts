@@ -86,7 +86,7 @@ Note right of A: By listing the participants you can change their order
 
 ### Code example:
 
-\`\`\`csharp
+\`\`\`javascript
 // this example generates a static link to use with this site
 
 const content = "# this is a title\\n .. put sequences, .dot files or markdown in here ..";
