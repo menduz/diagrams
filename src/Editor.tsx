@@ -2,7 +2,7 @@ import Monaco, { monaco as tmonaco } from "@monaco-editor/react";
 import type * as monacoEditor from "monaco-editor/esm/vs/editor/editor.api";
 import React, { useState, useRef, useEffect } from "react";
 import { useRouteMatch, useLocation } from "react-router-dom";
-import { getExampleRef } from "./firebase";
+import { getExampleRef, logEvent } from "./firebase";
 import { parseMD, Content } from "./md";
 import { SequenceDiagram } from "./diagrams";
 import { DEFAULT_EXAMPLE } from "./example";
@@ -206,6 +206,7 @@ export function Editor(props: { readonly?: boolean }) {
     headless.setText(val, function (data: any, succeed: boolean) {
       setLoadingCopy(false);
       if (succeed) {
+        logEvent('make_copy')
         setFullscreen(false);
         navigateTo(`/editor/${ref.key}`);
       }
@@ -301,6 +302,7 @@ export function Editor(props: { readonly?: boolean }) {
                 generateStaticLink(editorRef.current!.getValue()!)
               ).then(() => {
                 editorRef.current!.focus();
+                logEvent('share_ro')
               });
             }}
           >
@@ -314,6 +316,7 @@ export function Editor(props: { readonly?: boolean }) {
               onClick={() => {
                 copyTextToClipboard(document.location.toString()).then(() => {
                   editorRef.current!.focus();
+                  logEvent('share_editable')
                 });
               }}
             >

@@ -57,3 +57,11 @@ export function getExampleRef(currentRef?: string) {
   }
   return ref;
 }
+
+export function logEvent(event: string) {
+  firebase.analytics().logEvent(event);
+}
+
+export function logPageView(page_location: string, page_path: string) {
+  firebase.analytics().logEvent("page_view", { page_location, page_path });
+}
