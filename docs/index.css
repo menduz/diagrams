@@ -16,18 +16,17 @@ body {
   margin: 0;
   height: 100%;
   background: #fff;
-  border-left: 1px solid #dbdbda;
-  transition: left ease-in-out 100ms; }
+  border-left: 1px solid #dbdbda; }
   .content .content-bar {
     position: absolute;
     top: 0px;
     left: 0;
     right: 0;
-    height: 48px;
+    height: 50px;
     border-bottom: 1px solid #dbdbda; }
   .content .scroll {
     position: absolute;
-    top: 49px;
+    top: 51px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -39,18 +38,19 @@ body {
   position: absolute;
   top: 0px;
   left: 0;
-  right: calc(100vw - var(--sidebar));
-  height: 48px;
+  width: var(--sidebar);
+  height: 50px;
   border-bottom: 1px solid #dbdbda; }
 
 .editor {
   position: absolute;
-  top: 0;
+  top: 50px;
   left: 0;
   bottom: 0;
-  right: calc(100vw - var(--sidebar)); }
+  width: var(--sidebar); }
 
-.fullscreen .tools, .fullscreen .editor {
+.fullscreen .tools,
+.fullscreen .editor {
   display: none; }
 
 .fullscreen .content {
@@ -78,6 +78,23 @@ section {
 .home {
   font-size: 16px;
   padding: 104px 65px; }
+
+.sidebar-dragger {
+  width: 5px;
+  cursor: ew-resize;
+  padding: 4px 0 0;
+  border-top: 1px solid #ddd;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1000000;
+  background-color: #f4f7f9; }
+
+.sidebar-dragger.active {
+  background-color: #dbdbda; }
+
+.user-name {
+  color: #000; }
 
 /*!
  * Primer CSS

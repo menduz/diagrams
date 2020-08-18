@@ -31,6 +31,8 @@ export async function addFirebase() {
   firebase.initializeApp(firebaseConfig);
   firebase.analytics();
 
+  await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
   await new Promise<any>((resolve, reject) => {
     const unsubscribe = firebase.auth().onAuthStateChanged(
       (user: any) => {
@@ -44,22 +46,47 @@ export async function addFirebase() {
     );
   });
 }
+
+export function setDocumentTitle(documentRef: Firebase, title: string) {
+  documentRef.set({ title });
+}
+
 // Helper to get hash from end of URL or generate a random one.
-export function getExampleRef(currentRef?: string) {
-  var ref = firebase.database().ref();
-  if (currentRef) {
-    ref = ref.child(currentRef);
-  } else {
-    ref = ref.push(); // generate unique location.
+export function newNotebook(userId: string): Firebase {
+  const ref: Firebase = firebase.database().ref();
+  const document = ref.push(); // generate unique location.
+
+  document.child("meta").set({
+    uid: userId,
+    title: "Untitled notebook"
+  });
+
+  if (userId) {
+    const docList = firebase.database().ref().child("user_notebooks/" + userId);
+    docList.push(document.key);
   }
+
   if (typeof console !== "undefined") {
-    console.log("Firebase data: ", ref.toString());
+    console.log("Firebase data: ", document.toString());
   }
-  return ref;
+
+  return document;
+}
+
+export function openByHash(currentRef: string): Firebase {
+  var ref: Firebase = firebase.database().ref();
+  return ref.child(currentRef);
 }
 
 export function logEvent(event: string) {
   firebase.analytics().logEvent(event);
+}
+
+export function logException(error: Error | string) {
+  firebase.analytics().logEvent("eventName", {
+    description: typeof error == "object" ? error.message : error,
+    fatal: typeof error == "object",
+  });
 }
 
 export function logPageView(page_location: string, page_path: string) {
