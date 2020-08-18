@@ -14,13 +14,20 @@ let firebaseConfig = {
 
 declare var firebase: any;
 
+let useAnalytics = false;
+
 export async function addFirebase() {
   await injectScript(
     "https://www.gstatic.com/firebasejs/7.14.2/firebase-app.js"
   );
-  await injectScript(
-    "https://www.gstatic.com/firebasejs/7.14.2/firebase-analytics.js"
-  );
+
+  try {
+    await injectScript(
+      "https://www.gstatic.com/firebasejs/7.14.2/firebase-analytics.js"
+    );
+    useAnalytics = true;
+  } catch {}
+
   await injectScript(
     "https://www.gstatic.com/firebasejs/7.14.2/firebase-auth.js"
   );
@@ -29,7 +36,10 @@ export async function addFirebase() {
   );
 
   firebase.initializeApp(firebaseConfig);
-  firebase.analytics();
+
+  if (useAnalytics) {
+    firebase.analytics();
+  }
 
   await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
@@ -58,11 +68,14 @@ export function newNotebook(userId: string): Firebase {
 
   document.child("meta").set({
     uid: userId,
-    title: "Untitled notebook"
+    title: "Untitled notebook",
   });
 
   if (userId) {
-    const docList = firebase.database().ref().child("user_notebooks/" + userId);
+    const docList = firebase
+      .database()
+      .ref()
+      .child("user_notebooks/" + userId);
     docList.push(document.key);
   }
 
@@ -79,16 +92,22 @@ export function openByHash(currentRef: string): Firebase {
 }
 
 export function logEvent(event: string) {
-  firebase.analytics().logEvent(event);
+  if (useAnalytics) {
+    firebase.analytics().logEvent(event);
+  }
 }
 
 export function logException(error: Error | string) {
-  firebase.analytics().logEvent("eventName", {
-    description: typeof error == "object" ? error.message : error,
-    fatal: typeof error == "object",
-  });
+  if (useAnalytics) {
+    firebase.analytics().logEvent("eventName", {
+      description: typeof error == "object" ? error.message : error,
+      fatal: typeof error == "object",
+    });
+  }
 }
 
 export function logPageView(page_location: string, page_path: string) {
-  firebase.analytics().logEvent("page_view", { page_location, page_path });
+  if (useAnalytics) {
+    firebase.analytics().logEvent("page_view", { page_location, page_path });
+  }
 }
