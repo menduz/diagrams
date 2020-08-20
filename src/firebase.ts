@@ -1,4 +1,7 @@
-import { injectScript } from "./helpers";
+import app from "firebase/app";
+import "firebase/auth";
+import "firebase/database";
+import "firebase/analytics";
 
 // Your web app's Firebase configuration
 let firebaseConfig = {
@@ -12,27 +15,14 @@ let firebaseConfig = {
   measurementId: "G-HLCQLCWE0G",
 };
 
-declare var firebase: any;
-
 export async function addFirebase() {
-  await injectScript(
-    "https://www.gstatic.com/firebasejs/7.14.2/firebase-app.js"
-  );
-  await injectScript(
-    "https://www.gstatic.com/firebasejs/7.14.2/firebase-analytics.js"
-  );
-  await injectScript(
-    "https://www.gstatic.com/firebasejs/7.14.2/firebase-auth.js"
-  );
-  await injectScript(
-    "https://www.gstatic.com/firebasejs/7.14.2/firebase-database.js"
-  );
+  app.initializeApp(firebaseConfig);
+  app.analytics();
 
-  firebase.initializeApp(firebaseConfig);
-  firebase.analytics();
+  await app.auth!().setPersistence(app.auth!.Auth.Persistence.LOCAL);
 
   await new Promise<any>((resolve, reject) => {
-    const unsubscribe = firebase.auth().onAuthStateChanged(
+    const unsubscribe = app.auth!().onAuthStateChanged(
       (user: any) => {
         unsubscribe();
         resolve(user);
@@ -44,24 +34,52 @@ export async function addFirebase() {
     );
   });
 }
+
 // Helper to get hash from end of URL or generate a random one.
-export function getExampleRef(currentRef?: string) {
-  var ref = firebase.database().ref();
-  if (currentRef) {
-    ref = ref.child(currentRef);
-  } else {
-    ref = ref.push(); // generate unique location.
+export function newNotebook(userId: string) {
+  const ref = app.database!().ref();
+  const document = ref.push(); // generate unique location.
+
+  document.child("meta/uid").set(userId, function (err) {
+    if (err) console.log("error setting uid", err);
+  });
+
+  document.child("meta/title").set("Untitled notebook", function (err) {
+    if (err) console.log("error setting titile2", err);
+  });
+
+  if (userId) {
+    const docList = app.database!()
+      .ref()
+      .child("user_notebooks/" + userId);
+    docList.push(document.key);
   }
+
   if (typeof console !== "undefined") {
-    console.log("Firebase data: ", ref.toString());
+    console.log("Firebase data: ", document.toString());
   }
-  return ref;
+
+  return document;
+}
+
+export function openByHash(currentRef: string) {
+  var ref = app.database!().ref();
+  return ref.child(currentRef);
 }
 
 export function logEvent(event: string) {
-  firebase.analytics().logEvent(event);
+  app.analytics!().logEvent(event as any);
+}
+
+export function logException(error: Error | string) {
+  app.analytics!().logEvent("exception", {
+    description: typeof error == "object" ? error.message : error,
+    fatal: typeof error == "object",
+  });
 }
 
 export function logPageView(page_location: string, page_path: string) {
-  firebase.analytics().logEvent("page_view", { page_location, page_path });
+  app.analytics!().logEvent("page_view", { page_location, page_path } as any);
 }
+
+globalThis["firebase"] = app;

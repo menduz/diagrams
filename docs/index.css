@@ -16,18 +16,17 @@ body {
   margin: 0;
   height: 100%;
   background: #fff;
-  border-left: 1px solid #dbdbda;
-  transition: left ease-in-out 100ms; }
+  border-left: 1px solid #dbdbda; }
   .content .content-bar {
     position: absolute;
     top: 0px;
     left: 0;
     right: 0;
-    height: 48px;
+    height: 50px;
     border-bottom: 1px solid #dbdbda; }
   .content .scroll {
     position: absolute;
-    top: 49px;
+    top: 51px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -39,18 +38,19 @@ body {
   position: absolute;
   top: 0px;
   left: 0;
-  right: calc(100vw - var(--sidebar));
-  height: 48px;
+  width: var(--sidebar);
+  height: 50px;
   border-bottom: 1px solid #dbdbda; }
 
 .editor {
   position: absolute;
-  top: 0;
+  top: 50px;
   left: 0;
   bottom: 0;
-  right: calc(100vw - var(--sidebar)); }
+  width: var(--sidebar); }
 
-.fullscreen .tools, .fullscreen .editor {
+.fullscreen .tools,
+.fullscreen .editor {
   display: none; }
 
 .fullscreen .content {
@@ -78,6 +78,23 @@ section {
 .home {
   font-size: 16px;
   padding: 104px 65px; }
+
+.sidebar-dragger {
+  width: 5px;
+  cursor: ew-resize;
+  padding: 4px 0 0;
+  border-top: 1px solid #ddd;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 99;
+  background-color: #f4f7f9; }
+
+.sidebar-dragger:active {
+  background-color: #dbdbda; }
+
+.user-name {
+  color: #000; }
 
 /*!
  * Primer CSS
@@ -2325,10 +2342,13 @@ p.explain {
   border-bottom: 1px #e1e4e8 solid; }
 
 .tabnav-tabs {
-  margin-bottom: -1px; }
+  display: flex;
+  margin-bottom: -1px;
+  overflow: auto; }
 
 .tabnav-tab {
   display: inline-block;
+  flex-shrink: 0;
   padding: 8px 16px;
   font-size: 14px;
   line-height: 23px;
@@ -3674,6 +3694,10 @@ a.tabnav-extra:hover {
 /* Set the background to $bg-purple-light */
 .bg-purple-light {
   background-color: #f5f0ff !important; }
+
+/* Set the background to $bg-orange */
+.bg-orange {
+  background-color: #d15704 !important; }
 
 .color-gray-0 {
   color: #fafbfc !important; }
@@ -8255,7 +8279,7 @@ a.branch-name {
 
 .Label--yellow {
   color: #735c0f;
-  border-color: #f9c513; }
+  border-color: #b08800; }
 
 .Label--orange {
   color: #c24e00;
@@ -8325,7 +8349,7 @@ a.branch-name {
   border: 1px solid transparent;
   border-radius: 2em; }
   .Counter:empty {
-    visibility: hidden; }
+    display: none; }
   .Counter .octicon {
     vertical-align: text-top;
     opacity: 0.8; }
@@ -8552,6 +8576,8 @@ a.branch-name {
 .markdown-body table {
   display: block;
   width: 100%;
+  width: max-content;
+  max-width: 100%;
   overflow: auto; }
   .markdown-body table th {
     font-weight: 600; }
@@ -11840,3 +11866,6 @@ a.branch-name {
   .py-xl-12 {
     padding-top: 128px !important;
     padding-bottom: 128px !important; } }
+
+.avatar.tooltipped {
+  overflow: visible !important; }

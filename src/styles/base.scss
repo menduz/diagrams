@@ -19,20 +19,19 @@ body {
   height: 100%;
   background: #fff;
   border-left: 1px solid #dbdbda;
-  transition: left ease-in-out 100ms;
 
   .content-bar {
     position: absolute;
     top: 0px;
     left: 0;
     right: 0;
-    height: 48px;
+    height: 50px;
     border-bottom: 1px solid #dbdbda;
   }
 
   .scroll {
     position: absolute;
-    top: 49px;
+    top: 51px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -44,28 +43,26 @@ body {
   }
 }
 
-
 .tools {
   position: absolute;
   top: 0px;
   left: 0;
-  right: calc(100vw - var(--sidebar));
-  height: 48px;
+  width: var(--sidebar);
+  height: 50px;
   border-bottom: 1px solid #dbdbda;
 }
 
 .editor {
   position: absolute;
-  // top: 48px;
-  top: 0;
+  top: 50px;
   left: 0;
   bottom: 0;
-  right: calc(100vw - var(--sidebar));
+  width: var(--sidebar);
 }
 
-
 .fullscreen {
-  .tools,.editor {
+  .tools,
+  .editor {
     display: none;
   }
   .content {
@@ -85,16 +82,38 @@ section {
 #loading-placeholder {
   width: 100vw;
   height: 100vh;
-  background: #fff; }
+  background: #fff;
+}
 
 #loading-placeholder span {
   position: relative;
   font-size: 16px;
   color: #000;
   top: calc(50% - 16px);
-  left: calc(50% - 70px); }
+  left: calc(50% - 70px);
+}
 
 .home {
   font-size: 16px;
   padding: 104px 65px;
+}
+
+.sidebar-dragger {
+  width: 5px;
+  cursor: ew-resize;
+  padding: 4px 0 0;
+  border-top: 1px solid #ddd;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 99;
+  background-color: #f4f7f9;
+}
+
+.sidebar-dragger:active {
+  background-color: #dbdbda;
+}
+
+.user-name {
+  color: #000;
 }
