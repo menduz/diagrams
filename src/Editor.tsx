@@ -51,11 +51,7 @@ function Code($: { language: string; code: string }) {
 
   useEffect(() => {
     if (theRef.current && $.language) {
-      monaco.editor
-        .colorizeElement(theRef.current, { tabSize: 2 })
-        .then((e) => {
-          console.log("Colorizer done", e);
-        });
+      monaco.editor.colorizeElement(theRef.current, { tabSize: 2 });
     }
   }, [theRef, $.code, $.language]);
 

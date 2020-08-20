@@ -55,7 +55,7 @@ export function newNotebook(userId: string) {
     docList.push(document.key);
   }
 
-  if (typeof console !== "undefined") {
+  if (typeof console !== "undefined" && process.env.NODE_ENV != "production") {
     console.log("Firebase data: ", document.toString());
   }
 
