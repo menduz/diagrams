@@ -8,8 +8,9 @@ import React, {
 
 import { Octokit } from "@octokit/rest";
 import { logEvent, logException } from "./firebase";
-
-declare var firebase: any;
+import app from "firebase/app";
+import "firebase/database";
+import "firebase/auth";
 
 const authContext: Context<ReturnType<
   typeof useProvideAuth
@@ -81,7 +82,7 @@ function useProvideAuth() {
   const [uid, setUid] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  var provider = new firebase.auth.GithubAuthProvider();
+  var provider = new app.auth.GithubAuthProvider();
   provider.addScope("gist");
 
   function clearAuth() {
@@ -95,7 +96,9 @@ function useProvideAuth() {
   const signin = async () => {
     setLoading(true);
 
-    return firebase.auth().signInWithPopup(provider)
+    return app
+      .auth()
+      .signInWithPopup(provider)
       .then((response: any) => {
         if (response.credential) {
           storeCredential(response.user.uid, response.credential.accessToken);
@@ -114,7 +117,7 @@ function useProvideAuth() {
   };
 
   const signout = async () => {
-    return firebase
+    return app
       .auth()
       .signOut()
       .then(() => {
@@ -131,14 +134,20 @@ function useProvideAuth() {
 
     if (token) {
       const octokit = new Octokit({ auth: token });
-      const { data } = await octokit.request("/user");
+      const { data }: { data: GitHubUser } = await octokit.request("/user");
 
       if (data.id) {
         if (refresh) {
-          firebase.database()
+          app
+            .database()
             .ref()
             .child("users/" + user.uid)
-            .set(data);
+            .set({
+              login: data.login,
+              id: data.id,
+              name: data.name,
+              avatar_url: data.avatar_url,
+            });
         }
 
         setData({ user, octokit, gh: data });
@@ -156,7 +165,7 @@ function useProvideAuth() {
   // ... component that utilizes this hook to re-render with the ...
   // ... latest auth object.
   useEffect(() => {
-    const unsubscribe = firebase.auth().onAuthStateChanged((user: any) => {
+    const unsubscribe = app.auth().onAuthStateChanged((user: any) => {
       if (user) {
         gotUser(user);
       } else {

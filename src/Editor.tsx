@@ -4,10 +4,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { useRouteMatch, useLocation } from "react-router-dom";
 import { logEvent, openByHash, newNotebook } from "./firebase";
 import { parseMD, Content } from "./md";
-import { SequenceDiagram } from "./diagrams";
+import { SequenceDiagram, monospaceFont } from "./diagrams";
 import { DEFAULT_EXAMPLE } from "./example";
 import { graphviz } from "@hpcc-js/wasm";
 import { DropdownShare, closeMenu } from "./components/Dropdown";
+import app from "firebase/app";
 import {
   ShareAndroidIcon,
   LinkIcon,
@@ -23,8 +24,8 @@ import { navigateTo } from "./Nav";
 import { DownloadSvg } from "./components/DownloadSvg";
 import { useAuth, GitHubUser } from "./Auth";
 import { ResizeableSidebar } from "./components/Resize";
+import { UserList } from "./components/UserList";
 declare var Firepad: any;
-declare var firebase: any;
 declare var monaco: typeof monacoEditor;
 
 function Code($: { language: string; code: string }) {
@@ -209,10 +210,8 @@ export function Editor(props: { readonly?: boolean }) {
   const [md, setMd] = useState<Content[]>([]);
   const match = useRouteMatch<{ notepadId: string }>();
   const location = useLocation();
-  const auth = useAuth();
-
+  const authCtx = useAuth();
   const [size, setSize] = useState(props.readonly ? 0 : defaultExpandedSize());
-
   const [staticContent, setStaticContent] = useState<string>();
 
   let theTitle: string | null = null;
@@ -265,6 +264,8 @@ export function Editor(props: { readonly?: boolean }) {
       monaco.editor.setTheme(theme);
       editorRef.current.render();
 
+      theTitle = null;
+
       if (firepad) {
         firepad.dispose();
         editorRef.current.setValue("");
@@ -277,8 +278,8 @@ export function Editor(props: { readonly?: boolean }) {
           defaultText: DEFAULT_EXAMPLE,
         };
 
-        if (auth.uid) {
-          options.userId = auth.uid;
+        if (authCtx.uid) {
+          options.userId = authCtx.uid;
         }
 
         setFirepad(Firepad.fromMonaco(firebaseRef, editorRef.current, options));
@@ -298,10 +299,10 @@ export function Editor(props: { readonly?: boolean }) {
   }, [firepad]);
 
   useEffect(() => {
-    if (firepad && auth.uid) {
-      firepad.setUserId(auth.uid);
+    if (firepad && authCtx.uid) {
+      firepad.setUserId(authCtx.uid);
     }
-  }, [auth.data]);
+  }, [authCtx.data]);
 
   useEffect(() => {
     if (editorRef.current) {
@@ -310,7 +311,8 @@ export function Editor(props: { readonly?: boolean }) {
   }, [size]);
 
   function makeCopy() {
-    let owner = firebase.auth().getUid() || "anonymous";
+    let owner =
+      (app.auth().currentUser && app.auth().currentUser!.uid) || "anonymous";
 
     setLoadingCopy(true);
 
@@ -319,6 +321,7 @@ export function Editor(props: { readonly?: boolean }) {
     const val = editorRef.current!.getValue();
 
     const headless = new Firepad.Headless(ref);
+
     headless.setText(val, function (data: any, succeed: boolean) {
       setLoadingCopy(false);
       if (succeed) {
@@ -342,7 +345,6 @@ export function Editor(props: { readonly?: boolean }) {
 
   if (!hadTitle) {
     document.title = "Untitled document - Diagrams";
-    theTitle = "Untitled document";
   }
 
   const c = md.map(render);
@@ -374,13 +376,13 @@ export function Editor(props: { readonly?: boolean }) {
   }
 
   function MakeCopyMenu() {
-    if (auth.uid) {
+    if (authCtx.uid) {
       return (
         <button
           className="btn tooltipped tooltipped-se mr-2"
           aria-label="Makes a copy"
           onClick={makeCopy}
-          aria-disabled={!auth.uid}
+          aria-disabled={!authCtx.uid}
         >
           <RepoForkedIcon size={16} />
           <span>
@@ -408,7 +410,7 @@ export function Editor(props: { readonly?: boolean }) {
               className="dropdown-item"
               onClick={async () => {
                 setLoadingCopy(true);
-                await auth.signin();
+                await authCtx.signin();
                 makeCopy();
               }}
               href={document.location.toString()}
@@ -442,9 +444,12 @@ export function Editor(props: { readonly?: boolean }) {
       firebaseRef.child("meta").once("value", function (a: any) {
         setMeta(a || null);
       });
-      firebaseRef.child("meta/title").set(theTitle, (err: Error) => {
-        err && console.log("err, cant set meta");
-      });
+
+      if (theTitle) {
+        firebaseRef.child("meta/title").set(theTitle, (err: Error) => {
+          err && console.log("err, cant set meta");
+        });
+      }
     } else {
       setMeta(null);
     }
@@ -452,8 +457,7 @@ export function Editor(props: { readonly?: boolean }) {
 
   useEffect(() => {
     if (meta) {
-      console.log(meta.toJSON());
-      firebase
+      app
         .database()
         .ref()
         .child(`users/${meta.child("uid").val()}`)
@@ -466,33 +470,65 @@ export function Editor(props: { readonly?: boolean }) {
   return (
     <div className={size == 0 ? "fullscreen" : ""}>
       <ResizeableSidebar size={size} onResize={(n) => setSize(n)}>
-        <div className="tools d-flex p-2" style={{ width: size }}>
-          {author ? (
-            <>
-              <img
-                className="avatar avatar-small"
-                alt={author.login}
-                src={`${author.avatar_url}&s=40`}
-                width="20"
-                height="20"
-                aria-label={author.login}
-              />
-              <span>{author.login}</span>
-            </>
-          ) : (
-            <>
-              <img
-                className="avatar avatar-small"
-                alt="Anonymous"
-                src="https://user-images.githubusercontent.com/334891/29999089-2837c968-9009-11e7-92c1-6a7540a594d5.png"
-                width="20"
-                height="20"
-                aria-label="Sign in"
-              />
-              <span>Anonymous</span>
-            </>
-          )}{" "}
-          / {theTitle}
+        <div
+          className="tools d-flex flex-justify-between"
+          style={{ width: size }}
+        >
+          <div className="p-2 d-flex">
+            {staticContent ? (
+              <div className="flex-self-center ml-2">
+                <span>{theTitle}</span>
+              </div>
+            ) : author ? (
+              <>
+                <img
+                  className="avatar avatar-small m-2"
+                  alt={author.login}
+                  src={`${author.avatar_url}&s=40`}
+                  width="20"
+                  height="20"
+                  aria-label={author.login}
+                />
+                <div className="flex-self-center">
+                  <span
+                    style={{
+                      fontFamily: monospaceFont,
+                    }}
+                  >
+                    {author.login}
+                  </span>
+                  {" / "}
+                  <span>{theTitle}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <img
+                  className="avatar avatar-small m-2"
+                  alt="anonymous"
+                  src="https://user-images.githubusercontent.com/334891/29999089-2837c968-9009-11e7-92c1-6a7540a594d5.png"
+                  width="20"
+                  height="20"
+                  aria-label="Sign in"
+                />
+                <div className="flex-self-center">
+                  <span
+                    style={{
+                      fontFamily: monospaceFont,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    anonymous
+                  </span>
+                  {" / "}
+                  <span>{theTitle}</span>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="p-2">
+            <MakeCopyMenu />
+          </div>
           {/* {firebaseRef && <Users users={firebaseRef.child("users")} />} */}
         </div>
         <div className="editor" style={{ width: size }}>
@@ -524,6 +560,8 @@ export function Editor(props: { readonly?: boolean }) {
             value={""}
             editorDidMount={handleEditorDidMount}
             options={{
+              fontFamily: monospaceFont,
+              // fontSize: 13,
               lineNumbers: "on",
               minimap: { enabled: false },
               readOnly: !!props.readonly,
@@ -535,13 +573,6 @@ export function Editor(props: { readonly?: boolean }) {
       <div className="content" style={{ left: size + 5 }}>
         <div className="content-bar d-flex flex-justify-between">
           <div className="p-2">
-            {loadingSave && (
-              <span className="m-1">
-                <span>Saving</span>
-                <span className="AnimatedEllipsis"></span>
-              </span>
-            )}
-
             <button
               className="btn btn-octicon tooltipped tooltipped-se mr-2"
               aria-label="Show or hide the code editor."
@@ -556,12 +587,19 @@ export function Editor(props: { readonly?: boolean }) {
                 strokeColor="#586069"
               />
             </button>
-            <MakeCopyMenu />
+
+            {loadingSave && (
+              <span className="m-1">
+                <span>Saving</span>
+                <span className="AnimatedEllipsis"></span>
+              </span>
+            )}
           </div>
 
-          <div className="p-2">
+          <div className="p-2 d-flex">
+            <UserList documentRef={firebaseRef} />
             <DropdownShare label="Share" className="btn-invisible">
-              <li>
+              {/* <li>
                 <a
                   className="dropdown-item"
                   onClick={makeGist}
@@ -570,7 +608,7 @@ export function Editor(props: { readonly?: boolean }) {
                   <MarkGithubIcon size={16} className="mr-2" />
                   <span>Create gist</span>
                 </a>
-              </li>
+              </li> */}
               <li>
                 <a
                   className="dropdown-item"
@@ -601,7 +639,6 @@ export function Editor(props: { readonly?: boolean }) {
         <div className="scroll">
           <div className="markdown-body">{c}</div>
         </div>
-        {/* {loading && <></div> } */}
       </div>
     </div>
   );

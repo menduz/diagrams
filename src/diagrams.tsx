@@ -2,13 +2,14 @@ import { injectScript } from "./helpers";
 import React, { useEffect, useRef, useState } from "react";
 import { DownloadSvg } from "./components/DownloadSvg";
 
-const font = '14px Menlo, Monaco, "Courier New", monospace';
+export const monospaceFont = `Menlo, Monaco, "Courier New", monospace`
+
+const font = `14px ${monospaceFont}`;
 
 type Actor = {
   alias: string;
   name: string;
   index: number;
-
   distances: number[];
   paddingRight: number;
 } & Rect;

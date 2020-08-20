@@ -1,4 +1,7 @@
-import { injectScript } from "./helpers";
+import app from "firebase/app";
+import "firebase/auth";
+import "firebase/database";
+import "firebase/analytics";
 
 // Your web app's Firebase configuration
 let firebaseConfig = {
@@ -12,39 +15,14 @@ let firebaseConfig = {
   measurementId: "G-HLCQLCWE0G",
 };
 
-declare var firebase: any;
-
-let useAnalytics = false;
-
 export async function addFirebase() {
-  await injectScript(
-    "https://www.gstatic.com/firebasejs/7.14.2/firebase-app.js"
-  );
+  app.initializeApp(firebaseConfig);
+  app.analytics();
 
-  try {
-    await injectScript(
-      "https://www.gstatic.com/firebasejs/7.14.2/firebase-analytics.js"
-    );
-    useAnalytics = true;
-  } catch {}
-
-  await injectScript(
-    "https://www.gstatic.com/firebasejs/7.14.2/firebase-auth.js"
-  );
-  await injectScript(
-    "https://www.gstatic.com/firebasejs/7.14.2/firebase-database.js"
-  );
-
-  firebase.initializeApp(firebaseConfig);
-
-  if (useAnalytics) {
-    firebase.analytics();
-  }
-
-  await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  await app.auth!().setPersistence(app.auth!.Auth.Persistence.LOCAL);
 
   await new Promise<any>((resolve, reject) => {
-    const unsubscribe = firebase.auth().onAuthStateChanged(
+    const unsubscribe = app.auth!().onAuthStateChanged(
       (user: any) => {
         unsubscribe();
         resolve(user);
@@ -57,23 +35,21 @@ export async function addFirebase() {
   });
 }
 
-export function setDocumentTitle(documentRef: Firebase, title: string) {
-  documentRef.set({ title });
-}
-
 // Helper to get hash from end of URL or generate a random one.
-export function newNotebook(userId: string): Firebase {
-  const ref: Firebase = firebase.database().ref();
+export function newNotebook(userId: string) {
+  const ref = app.database!().ref();
   const document = ref.push(); // generate unique location.
 
-  document.child("meta").set({
-    uid: userId,
-    title: "Untitled notebook",
+  document.child("meta/uid").set(userId, function (err) {
+    if (err) console.log("error setting uid", err);
+  });
+
+  document.child("meta/title").set("Untitled notebook", function (err) {
+    if (err) console.log("error setting titile2", err);
   });
 
   if (userId) {
-    const docList = firebase
-      .database()
+    const docList = app.database!()
       .ref()
       .child("user_notebooks/" + userId);
     docList.push(document.key);
@@ -86,28 +62,24 @@ export function newNotebook(userId: string): Firebase {
   return document;
 }
 
-export function openByHash(currentRef: string): Firebase {
-  var ref: Firebase = firebase.database().ref();
+export function openByHash(currentRef: string) {
+  var ref = app.database!().ref();
   return ref.child(currentRef);
 }
 
 export function logEvent(event: string) {
-  if (useAnalytics) {
-    firebase.analytics().logEvent(event);
-  }
+  app.analytics!().logEvent(event as any);
 }
 
 export function logException(error: Error | string) {
-  if (useAnalytics) {
-    firebase.analytics().logEvent("eventName", {
-      description: typeof error == "object" ? error.message : error,
-      fatal: typeof error == "object",
-    });
-  }
+  app.analytics!().logEvent("exception", {
+    description: typeof error == "object" ? error.message : error,
+    fatal: typeof error == "object",
+  });
 }
 
 export function logPageView(page_location: string, page_path: string) {
-  if (useAnalytics) {
-    firebase.analytics().logEvent("page_view", { page_location, page_path });
-  }
+  app.analytics!().logEvent("page_view", { page_location, page_path } as any);
 }
+
+globalThis["firebase"] = app;

@@ -7,12 +7,14 @@ import { terser } from "rollup-plugin-terser";
 import replace from "rollup-plugin-replace";
 import { string } from "rollup-plugin-string";
 import scss from "rollup-plugin-scss";
+const fixtslib = require("./fix-rollup");
 
 const PROD = process.env.BUILD === "production";
 
 console.log(`production: ${PROD}`);
 
 const plugins = [
+  fixtslib(),
   typescript({
     verbosity: 2,
     clean: true,
@@ -57,6 +59,32 @@ const plugins = [
         "arrayOf",
         "string",
       ],
+      tslib: [
+        "__extends",
+        "__assign",
+        "__rest",
+        "__decorate",
+        "__param",
+        "__metadata",
+        "__awaiter",
+        "__generator",
+        "__exportStar",
+        "__values",
+        "__read",
+        "__spread",
+        "__spreadArrays",
+        "__await",
+        "__asyncGenerator",
+        "__asyncDelegator",
+        "__asyncValues",
+        "__makeTemplateObject",
+        "__importStar",
+        "__importDefault",
+        "__classPrivateFieldGet",
+        "__classPrivateFieldSet",
+      ],
+      idb: ["openDb", "deleteDb"],
+      "node_modules/idb/build/idb.js": ["openDb", "deleteDb"],
       "react-dom": ["render", "createPortal"],
       "react-is": ["isValidElementType", "isElement", "typeOf"],
       "@monaco-editor/react": ["monaco"],
@@ -91,6 +119,7 @@ export default {
       name: "Arduz",
       sourcemap: !PROD,
       banner,
+      
     },
   ],
   external: ["buildInformation"],

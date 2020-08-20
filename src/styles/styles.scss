@@ -1,3 +1,7 @@
 @import "base.scss";
 
 @import "../../node_modules/@primer/css/index.scss";
+
+.avatar.tooltipped {
+  overflow: visible!important;
+}
