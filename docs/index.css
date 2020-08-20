@@ -6,6 +6,12 @@ body {
 :root {
   --sidebar: 40vw; }
 
+.top-bar, .content .content-bar, .tools {
+  height: 53px;
+  border-bottom: 1px solid #dbdbda;
+  align-items: center;
+  align-self: center; }
+
 .content {
   position: absolute;
   top: 0;
@@ -21,12 +27,10 @@ body {
     position: absolute;
     top: 0px;
     left: 0;
-    right: 0;
-    height: 50px;
-    border-bottom: 1px solid #dbdbda; }
+    right: 0; }
   .content .scroll {
     position: absolute;
-    top: 51px;
+    top: 53px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -38,13 +42,11 @@ body {
   position: absolute;
   top: 0px;
   left: 0;
-  width: var(--sidebar);
-  height: 50px;
-  border-bottom: 1px solid #dbdbda; }
+  width: var(--sidebar); }
 
 .editor {
   position: absolute;
-  top: 50px;
+  top: 53px;
   left: 0;
   bottom: 0;
   width: var(--sidebar); }
@@ -87,7 +89,7 @@ section {
   position: absolute;
   top: 0;
   bottom: 0;
-  z-index: 99;
+  z-index: 10;
   background-color: #f4f7f9; }
 
 .sidebar-dragger:active {

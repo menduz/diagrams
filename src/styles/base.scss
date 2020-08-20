@@ -4,8 +4,17 @@ body {
   text-rendering: geometricPrecision;
 }
 
+$top-bar-height: 53px;
+
 :root {
   --sidebar: 40vw;
+}
+
+.top-bar {
+  height: $top-bar-height;
+  border-bottom: 1px solid #dbdbda;
+  align-items: center;
+  align-self: center;
 }
 
 .content {
@@ -25,13 +34,12 @@ body {
     top: 0px;
     left: 0;
     right: 0;
-    height: 50px;
-    border-bottom: 1px solid #dbdbda;
+    @extend .top-bar;
   }
 
   .scroll {
     position: absolute;
-    top: 51px;
+    top: $top-bar-height;
     left: 0;
     right: 0;
     bottom: 0;
@@ -48,13 +56,12 @@ body {
   top: 0px;
   left: 0;
   width: var(--sidebar);
-  height: 50px;
-  border-bottom: 1px solid #dbdbda;
+  @extend .top-bar;
 }
 
 .editor {
   position: absolute;
-  top: 50px;
+  top: $top-bar-height;
   left: 0;
   bottom: 0;
   width: var(--sidebar);
@@ -106,7 +113,7 @@ section {
   position: absolute;
   top: 0;
   bottom: 0;
-  z-index: 99;
+  z-index: 10;
   background-color: #f4f7f9;
 }
 

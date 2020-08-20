@@ -29,36 +29,10 @@ export function UserList(props: {
     }
   }, [props.documentRef]);
 
-  function RenderAvatar(props: { user: { color: string }; id: string }) {
-    return (
-      <div
-        className="avatar tooltipped tooltipped-sw tooltipped-align-right-1"
-        aria-label="Human"
-        style={{
-          height: 20,
-          width: 20,
-          background: props.user.color,
-          // borderBottomWidth: 3,
-          // borderBottomStyle: "solid",
-          // borderBottomColor: props.user.color,
-          overflow: "visible",
-        }}
-      />
-    );
-
-    /*<img
-          className="avatar"
-          height="20"
-          alt="@octocat"
-          src="https://user-images.githubusercontent.com/334891/29999089-2837c968-9009-11e7-92c1-6a7540a594d5.png"
-          width="20"
-        />*/
-  }
-
   return (
     <div className="AvatarStack AvatarStack--three-plus AvatarStack--right d-inline-block flex-self-center">
       <div className="AvatarStack-body">
-        {Object.keys(users).map(
+        {Object.keys(users || {}).map(
           (userId) =>
             authCtx.uid != userId && (
               <Avatar userId={userId} className="tooltipped tooltipped-sw tooltipped-align-right-1" key={userId} />

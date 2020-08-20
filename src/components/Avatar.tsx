@@ -18,21 +18,19 @@ export function Avatar(props: {
   const [userData, setUserData] = useState<null | GitHubUser>();
   const authCtx = useAuth();
 
-  if (authCtx.uid) {
-    // Only see the users when we are logged in
-    useEffect(() => {
-      if (props.userId) {
-        firebase
-          .database()
-          .ref()
-          .child(`users/${props.userId}`)
-          .once("value", function (owner: any) {
-            console.log(owner.toJSON());
-            setUserData(owner.toJSON());
-          });
-      }
-    }, [props.userId]);
-  }
+  // Only see the users when we are logged in
+  useEffect(() => {
+    if (props.userId && authCtx.uid) {
+      firebase
+        .database()
+        .ref()
+        .child(`users/${props.userId}`)
+        .once("value", function (owner: any) {
+          console.log(owner.toJSON());
+          setUserData(owner.toJSON());
+        });
+    }
+  }, [props.userId]);
 
   if (!userData)
     return (
