@@ -1,13 +1,18 @@
-import Monaco, { monaco as tmonaco } from "@monaco-editor/react";
+import Monaco from "@monaco-editor/react";
 import type * as monacoEditor from "monaco-editor/esm/vs/editor/editor.api";
 import React, { useState, useRef, useEffect } from "react";
 import { useRouteMatch, useLocation } from "react-router-dom";
-import { logEvent, openByHashOld, newNotebook, openByHash } from "../firebase";
+import {
+  logEvent,
+  newNotebook,
+  openByHash,
+  newNotebookWithContent,
+} from "../firebase";
 import { parseMD } from "../md";
 import marked from "marked";
-import { SequenceDiagram, monospaceFont } from "../diagrams";
+import { monospaceFont } from "../diagrams";
 import { DEFAULT_EXAMPLE } from "../example";
-import { graphviz } from "@hpcc-js/wasm";
+
 import { DropdownShare, closeMenu } from "../components/Dropdown";
 import app from "firebase/app";
 import {
@@ -21,12 +26,13 @@ import { copyTextToClipboard, generateStaticLink } from "../helpers";
 import UseAnimations from "react-useanimations";
 import skipBack from "react-useanimations/lib/skipBack";
 import { navigateTo } from "../Nav";
-import { DownloadSvg } from "../components/DownloadSvg";
 import { useAuth, GitHubUser } from "../Auth";
 import { ResizeableSidebar } from "../components/Resize";
 import { UserList } from "../components/UserList";
 import { UserMenu } from "src/components/UserMenu";
 import { ErrorBoundary } from "src/components/ErrorBounday";
+import { renderMarkdown } from "src/components/Markdown";
+
 declare var Firepad: any;
 declare var monaco: typeof monacoEditor;
 
@@ -34,161 +40,22 @@ marked.setOptions({
   sanitize: true,
 });
 
-var escapeReplacements: Record<string, string> = {
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  "#39": "'",
-};
-
-function unescape(text: string) {
-  return text.replace(/&(amp|lt|gt|quot|#39);/g, function (_, r) {
-    return escapeReplacements[r];
-  });
+function saveSize(size: number) {
+  localStorage.setItem("w-size", JSON.stringify({ size }));
 }
 
-function Code($: { language: string; code: string }) {
-  const theRef = useRef<HTMLPreElement>(null);
-
-  useEffect(() => {
-    if (theRef.current && $.language) {
-      monaco.editor.colorizeElement(theRef.current, { tabSize: 2 });
+function loadSize() {
+  try {
+    const stored = JSON.parse(localStorage.getItem("w-size") || "{}");
+    if (
+      typeof stored.size == "number" &&
+      !isNaN(stored.size) &&
+      stored.size >= 0
+    ) {
+      return stored.size;
     }
-  }, [theRef, $.code, $.language]);
-
-  return (
-    <pre ref={theRef} data-lang={$.language}>
-      {unescape($.code)}
-    </pre>
-  );
-}
-
-function defaultExpandedSize() {
+  } catch {}
   return window.innerWidth * 0.3;
-}
-
-function Dot(props: { code: string }) {
-  const [html, setHtml] = useState("Loading...");
-  const [error, setError] = useState<string>();
-
-  useEffect(() => {
-    graphviz
-      .dot(props.code, "svg", { wasmFolder: "wasm" })
-      .then(($) => {
-        setError("");
-        setHtml($);
-      })
-      .catch((e) => {
-        setError(e.message);
-      });
-  }, [props.code]);
-
-  return (
-    <>
-      {error && <pre>{error}</pre>}
-
-      <DownloadSvg dangerouslySetInnerHTML={{ __html: html }} />
-    </>
-  );
-}
-
-function render($: marked.Token, key: number = 0): any {
-  if ("type" in $) {
-    if ($.type === "heading") {
-      switch ($.depth) {
-        case 1:
-          return <h1 key={key}>{unescape($.text)}</h1>;
-        case 2:
-          return <h2 key={key}>{unescape($.text)}</h2>;
-        case 3:
-          return <h3 key={key}>{unescape($.text)}</h3>;
-        case 4:
-          return <h4 key={key}>{unescape($.text)}</h4>;
-        case 5:
-          return <h5 key={key}>{unescape($.text)}</h5>;
-        default:
-          return <h6 key={key}>{unescape($.text)}</h6>;
-      }
-    } else if ($.type === "code") {
-      if ($.lang == "sequence") {
-        return <SequenceDiagram key={key} input={unescape($.text) || ""} />;
-      } else if ($.lang == "dot") {
-        return <Dot key={key} code={unescape($.text) || ""} />;
-      }
-      return (
-        <Code key={key} language={$.lang || ""} code={unescape($.text)!} />
-      );
-    } else if ($.type === "paragraph") {
-      if ("tokens" in $) {
-        return <p key={key}>{($ as any).tokens.map(render)}</p>;
-      }
-      return <p key={key}>{unescape($.text)}</p>;
-    } else if ($.type === "blockquote") {
-      if ("tokens" in $) {
-        return (
-          <blockquote key={key}>{($ as any).tokens.map(render)}</blockquote>
-        );
-      }
-      return <blockquote key={key}>{unescape($.text)}</blockquote>;
-    } else if ($.type === "em") {
-      if ("tokens" in $) {
-        return <em key={key}>{($ as any).tokens.map(render)}</em>;
-      }
-      return <em key={key}>{unescape($.text)}</em>;
-    } else if ($.type === "strong") {
-      if ("tokens" in $) {
-        return <b key={key}>{($ as any).tokens.map(render)}</b>;
-      }
-      return <b key={key}>{unescape($.text)}</b>;
-    } else if ($.type === "html") {
-      return <span key={key}>{JSON.stringify($.raw, null, 2)}</span>;
-    } else if ($.type === "text") {
-      if ("tokens" in $) {
-        return <span key={key}>{($ as any).tokens.map(render)}</span>;
-      }
-      return <span key={key}>{unescape($.text)}</span>;
-    } else if ($.type === "codespan") {
-      return <code key={key}>{unescape($.text)}</code>;
-    } else if ($.type === "link") {
-      return <span key={key}>{unescape($.text)}</span>;
-    } else if ($.type === "space") {
-      return <div key={key} />;
-    } else if ($.type === "escape") {
-      return <span key={key}>{unescape($.text)}</span>;
-    } else if ($.type === "hr") {
-      return <hr key={key} />;
-    } else if ($.type === "list_item") {
-      if ("tokens" in $) {
-        return <li key={key}>{($ as any).tokens.map(render)}</li>;
-      }
-      return <li key={key}>{unescape($.text)}</li>;
-    } else if (($.type as any) === "list") {
-      const l = $ as marked.Tokens.List;
-      if (l.ordered) {
-        return (
-          <ol key={key} start={(l.start as any) as number}>
-            {l.items.map(render)}
-          </ol>
-        );
-      }
-      return <ul key={key}>{l.items.map(render)}</ul>;
-    } else {
-      return (
-        <span key={key} style={{ color: "red!important" }}>
-          {process.env.NODE_ENV == "production"
-            ? $.raw
-            : JSON.stringify($, null, 2)}
-        </span>
-      );
-    }
-  }
-
-  return (
-    <code key={key} style={{ color: "orange!important" }}>
-      {JSON.stringify($, null, 2)}
-    </code>
-  );
 }
 
 export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
@@ -206,7 +73,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
   const isOldModel = "notepadId" in match.params;
   const isReadonly = props.readonly || isOldModel;
 
-  const [size, setSize] = useState(props.readonly ? 0 : defaultExpandedSize());
+  const [size, setSize] = useState(props.readonly ? 0 : loadSize());
   const [staticContent, setStaticContent] = useState<string>();
   const [, setIsEditorReady] = useState(false);
   const [author, setAuthor] = useState<GitHubUser | null>(null);
@@ -218,7 +85,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
     const qs = new URLSearchParams(location.search);
     setStaticContent(qs.get("t") || "");
     if (qs.has("open")) {
-      setSize(defaultExpandedSize());
+      setSize(loadSize());
     }
   }, [location.search]);
 
@@ -304,26 +171,18 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
     }
   }, [size]);
 
-  function makeCopy() {
-    let owner =
-      (app.auth().currentUser && app.auth().currentUser!.uid) || "anonymous";
-
-    setLoadingCopy(true);
-
-    const ref = newNotebook(owner);
-
+  async function makeCopy() {
     const val = editorRef.current!.getValue();
 
-    const headless = new Firepad.Headless(ref);
+    setLoadingCopy(true);
+    const { ref, succeed, owner } = await newNotebookWithContent(val);
+    setLoadingCopy(false);
 
-    headless.setText(val, function (data: any, succeed: boolean) {
-      setLoadingCopy(false);
-      if (succeed) {
-        logEvent("make_copy");
-        setSize(defaultExpandedSize());
-        navigateTo(`/notebook/${owner}/${ref.key}`);
-      }
-    });
+    if (succeed) {
+      logEvent("make_copy");
+      setSize(loadSize());
+      navigateTo(`/notebook/${owner}/${ref.key}`);
+    }
   }
 
   let hadTitle = false;
@@ -341,7 +200,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
     document.title = "Untitled document - Diagrams";
   }
 
-  const c = md.map(render);
+  const c = md.map(renderMarkdown);
 
   function copyReadOnlyLink() {
     copyTextToClipboard(
@@ -460,7 +319,13 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
 
   return (
     <div className={size == 0 ? "fullscreen" : ""}>
-      <ResizeableSidebar size={size} onResize={(n) => setSize(n)}>
+      <ResizeableSidebar
+        size={size}
+        onResize={(n) => {
+          setSize(n);
+          saveSize(n);
+        }}
+      >
         <div
           className="tools d-flex flex-justify-between"
           style={{ width: size }}
@@ -576,7 +441,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
               className="btn btn-octicon tooltipped tooltipped-se mr-2"
               aria-label="Show or hide the code editor."
               onClick={() => {
-                setSize(size == 0 ? defaultExpandedSize() : 0);
+                setSize(size == 0 ? loadSize() : 0);
               }}
             >
               <UseAnimations

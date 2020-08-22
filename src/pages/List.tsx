@@ -11,6 +11,8 @@ import { useAuth } from "src/Auth";
 import app from "firebase/app";
 import { Link } from "react-router-dom";
 import { navigateTo } from "src/Nav";
+import { DEFAULT_EXAMPLE } from "src/example";
+import { newNotebookWithContent, logEvent } from "src/firebase";
 
 type Notebook = {
   meta: { title: string; uid: string };
@@ -48,6 +50,7 @@ function ListNotebooks(props: { data: Record<string, Notebook> }) {
 export function List() {
   const auth = useAuth();
   const [myNotebooks, setMyNotebooks] = useState<any>(null);
+  const [creating, setCreating] = useState<boolean>(false);
 
   document.title = "My notebooks - Sequence diagrams";
 
@@ -70,6 +73,21 @@ export function List() {
     );
   }
 
+  async function newNotebook() {
+    setCreating(true);
+
+    const { ref, succeed, owner } = await newNotebookWithContent(
+      DEFAULT_EXAMPLE
+    );
+
+    setCreating(false);
+
+    if (succeed) {
+      logEvent("new_notebook_list");
+      navigateTo(`/notebook/${owner}/${ref.key}`);
+    }
+  }
+
   return (
     <div className="content p-responsive" style={{ left: 0 }}>
       <div className="top-bar content-bar d-flex flex-justify-between">
@@ -85,9 +103,15 @@ export function List() {
         <div className="Subhead pt-4">
           <div className="Subhead-heading">My notebooks</div>
           <div className="Subhead-actions">
-            <a href="#url" className="btn btn-sm btn-primary" role="button">
+            <button
+              disabled={!!creating}
+              className="btn btn-sm btn-primary"
+              role="button"
+              onClick={newNotebook}
+            >
               New notebook
-            </a>
+              {creating && <span className="AnimatedEllipsis"></span>}
+            </button>
           </div>
           <div className="Subhead-description">
             Here are the notebooks of your own.

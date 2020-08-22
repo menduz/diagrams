@@ -2,6 +2,7 @@ import app from "firebase/app";
 import "firebase/auth";
 import "firebase/database";
 import "firebase/analytics";
+import future from "fp-future";
 
 // Your web app's Firebase configuration
 let firebaseConfig = {
@@ -76,6 +77,23 @@ export function logException(error: Error | string) {
 
 export function logPageView(page_location: string, page_path: string) {
   app.analytics!().logEvent("page_view", { page_location, page_path } as any);
+}
+declare var Firepad: any;
+
+export async function newNotebookWithContent(content: string) {
+  const ret = future<{succeed: boolean, ref: app.database.Reference, data: any, owner: string}>();
+  let owner =
+    (app.auth().currentUser && app.auth().currentUser!.uid) || "anonymous";
+
+  const ref = newNotebook(owner);
+
+  const headless = new Firepad.Headless(ref);
+
+  headless.setText(content, function (data: any, succeed: boolean) {
+    ret.resolve({ ref, data, succeed, owner });
+  });
+
+  return ret;
 }
 
 globalThis["firebase"] = app;

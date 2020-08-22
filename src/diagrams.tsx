@@ -2,7 +2,7 @@ import { injectScript } from "./helpers";
 import React, { useEffect, useRef, useState } from "react";
 import { DownloadSvg } from "./components/DownloadSvg";
 
-export const monospaceFont = `Menlo, Monaco, "Courier New", monospace`
+export const monospaceFont = `Menlo, Monaco, "Courier New", monospace`;
 
 const font = `14px ${monospaceFont}`;
 
@@ -684,7 +684,11 @@ export function SequenceDiagram(props: { input: string; className?: string }) {
 
   if (!error) {
     return (
-      <div className={className} style={{ width, height }} ref={divRef}>
+      <div
+        className={className}
+        style={{ width, height: height + 32 /* download button height */ }}
+        ref={divRef}
+      >
         <RenderDiagram diagram={diagram} />
       </div>
     );
