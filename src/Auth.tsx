@@ -141,7 +141,7 @@ function useProvideAuth() {
           app
             .database()
             .ref()
-            .child("users/" + user.uid)
+            .child("users/" + user.uid + "/profile")
             .set({
               login: data.login,
               id: data.id,

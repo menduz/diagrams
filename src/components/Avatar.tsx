@@ -24,9 +24,8 @@ export function Avatar(props: {
       firebase
         .database()
         .ref()
-        .child(`users/${props.userId}`)
+        .child(`users/${props.userId}/profile`)
         .once("value", function (owner: any) {
-          console.log(owner.toJSON());
           setUserData(owner.toJSON());
         });
     }

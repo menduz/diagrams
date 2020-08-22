@@ -2,13 +2,13 @@ import Monaco, { monaco as tmonaco } from "@monaco-editor/react";
 import type * as monacoEditor from "monaco-editor/esm/vs/editor/editor.api";
 import React, { useState, useRef, useEffect } from "react";
 import { useRouteMatch, useLocation } from "react-router-dom";
-import { logEvent, openByHash, newNotebook } from "./firebase";
-import { parseMD } from "./md";
+import { logEvent, openByHashOld, newNotebook, openByHash } from "../firebase";
+import { parseMD } from "../md";
 import marked from "marked";
-import { SequenceDiagram, monospaceFont } from "./diagrams";
-import { DEFAULT_EXAMPLE } from "./example";
+import { SequenceDiagram, monospaceFont } from "../diagrams";
+import { DEFAULT_EXAMPLE } from "../example";
 import { graphviz } from "@hpcc-js/wasm";
-import { DropdownShare, closeMenu } from "./components/Dropdown";
+import { DropdownShare, closeMenu } from "../components/Dropdown";
 import app from "firebase/app";
 import {
   ShareAndroidIcon,
@@ -17,14 +17,15 @@ import {
   AlertIcon,
   MarkGithubIcon,
 } from "@primer/octicons-react";
-import { copyTextToClipboard, generateStaticLink } from "./helpers";
+import { copyTextToClipboard, generateStaticLink } from "../helpers";
 import UseAnimations from "react-useanimations";
 import skipBack from "react-useanimations/lib/skipBack";
-import { navigateTo } from "./Nav";
-import { DownloadSvg } from "./components/DownloadSvg";
-import { useAuth, GitHubUser } from "./Auth";
-import { ResizeableSidebar } from "./components/Resize";
-import { UserList } from "./components/UserList";
+import { navigateTo } from "../Nav";
+import { DownloadSvg } from "../components/DownloadSvg";
+import { useAuth, GitHubUser } from "../Auth";
+import { ResizeableSidebar } from "../components/Resize";
+import { UserList } from "../components/UserList";
+import { UserMenu } from "src/components/UserMenu";
 declare var Firepad: any;
 declare var monaco: typeof monacoEditor;
 
@@ -189,105 +190,21 @@ function render($: marked.Token, key: number = 0): any {
   );
 }
 
-function UserMenu() {
-  const auth = useAuth();
-
-  if (!auth.data) {
-    return (
-      <>
-        <details className="dropdown details-reset details-overlay d-inline-block mr-2">
-          <summary aria-haspopup="true">
-            <span
-              className="btn btn-invisible user-name"
-              style={{ color: "#000" }}
-            >
-              <span className="mr-2">Anonymous</span>
-              <img
-                className="avatar avatar-small"
-                alt="Anonymous"
-                src="https://user-images.githubusercontent.com/334891/29999089-2837c968-9009-11e7-92c1-6a7540a594d5.png"
-                width="20"
-                height="20"
-                aria-label="Sign in"
-              />
-              <div className="dropdown-caret"></div>
-            </span>
-          </summary>
-
-          <ul className="dropdown-menu dropdown-menu-sw">
-            <li>
-              <a
-                className="dropdown-item"
-                href={document.location.toString()}
-                onClick={() => {
-                  auth
-                    .signin()
-                    .then(() => closeMenu())
-                    .catch(() => closeMenu());
-                }}
-              >
-                <MarkGithubIcon size={16} className="mr-2" />
-                <span>Sign in</span>
-              </a>
-            </li>
-          </ul>
-        </details>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <details className="dropdown details-reset details-overlay d-inline-block mr-2">
-        <summary aria-haspopup="true">
-          <span
-            className="btn btn-invisible user-name"
-            style={{ color: "#000" }}
-          >
-            <span className="mr-2">{auth.data.user.displayName}</span>
-            <img
-              className="avatar avatar-small"
-              alt={auth.data.user.displayName}
-              src={`${auth.data.user.photoURL}&s=40`}
-              width="20"
-              height="20"
-              aria-label={auth.data.user.displayName}
-            />
-            <div className="dropdown-caret"></div>
-          </span>
-        </summary>
-
-        <ul className="dropdown-menu dropdown-menu-sw">
-          <li>
-            <a
-              className="dropdown-item"
-              href={document.location.toString()}
-              onClick={() => {
-                auth
-                  .signout()
-                  .then(() => closeMenu())
-                  .catch(() => closeMenu());
-              }}
-            >
-              <span>Sign out</span>
-            </a>
-          </li>
-        </ul>
-      </details>
-    </>
-  );
-}
-
-export function Editor(props: { readonly?: boolean }) {
+export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
   const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor>();
+
   const [firebaseRef, setFirebaseRef] = useState<any>(null);
   const [loadingCopy, setLoadingCopy] = useState<boolean>(false);
   const [loadingSave, setLoadingSave] = useState<boolean>(false);
   const [firepad, setFirepad] = useState<any>(null);
   const [md, setMd] = useState<marked.Token[]>([]);
-  const match = useRouteMatch<{ notepadId: string }>();
+  const match = useRouteMatch<{ user: string; notebook: string }>();
   const location = useLocation();
   const authCtx = useAuth();
+
+  const isOldModel = "notepadId" in match.params;
+  const isReadonly = props.readonly || isOldModel;
+
   const [size, setSize] = useState(props.readonly ? 0 : defaultExpandedSize());
   const [staticContent, setStaticContent] = useState<string>();
   const [, setIsEditorReady] = useState(false);
@@ -304,7 +221,7 @@ export function Editor(props: { readonly?: boolean }) {
     }
   }, [location.search]);
 
-  const theme = props.readonly ? "vs-disabled" : "vs";
+  const theme = isReadonly ? "vs-disabled" : "vs";
 
   const language = "markdown";
 
@@ -319,14 +236,13 @@ export function Editor(props: { readonly?: boolean }) {
   }
 
   useEffect(() => {
-    if (!props.readonly) {
-      if (!match.params.notepadId) debugger;
-      const ref = openByHash(match.params.notepadId);
+    if ("notebook" in match.params && match.params.notebook) {
+      const ref = openByHash(match.params.user, match.params.notebook);
       setFirebaseRef(ref);
     } else {
       setFirebaseRef(null);
     }
-  }, [match.params.notepadId]);
+  }, [match.url]);
 
   useEffect(() => {
     if (editorRef.current) {
@@ -359,13 +275,14 @@ export function Editor(props: { readonly?: boolean }) {
           options.userId = authCtx.uid;
         }
 
+
         setFirepad(Firepad.fromMonaco(firebaseRef, editorRef.current, options));
-      } else if (props.readonly) {
+      } else if (isReadonly && staticContent) {
         setFirepad(null);
         editorRef.current.setValue(staticContent || "<Empty>");
       }
     }
-  }, [editorRef.current, firebaseRef, staticContent]);
+  }, [editorRef.current, firebaseRef, staticContent, isReadonly]);
 
   useEffect(() => {
     if (firepad) {
@@ -534,7 +451,7 @@ export function Editor(props: { readonly?: boolean }) {
       app
         .database()
         .ref()
-        .child(`users/${meta.child("uid").val()}`)
+        .child(`users/${meta.child("uid").val()}/profile`)
         .once("value", function (owner: any) {
           setAuthor(owner.toJSON());
         });
@@ -551,7 +468,9 @@ export function Editor(props: { readonly?: boolean }) {
           <div className="p-2 d-flex">
             {staticContent ? (
               <div className="flex-self-center ml-2">
-                <span>{theTitle}</span>
+                <span className="css-truncate css-truncate-overflow">
+                  {theTitle}
+                </span>
               </div>
             ) : author ? (
               <>
@@ -572,7 +491,9 @@ export function Editor(props: { readonly?: boolean }) {
                     {author.login}
                   </span>
                   {" / "}
-                  <span>{theTitle}</span>
+                  <span className="css-truncate css-truncate-overflow">
+                    {theTitle}
+                  </span>
                 </div>
               </>
             ) : (
@@ -595,7 +516,9 @@ export function Editor(props: { readonly?: boolean }) {
                     anonymous
                   </span>
                   {" / "}
-                  <span>{theTitle}</span>
+                  <span className="css-truncate css-truncate-overflow">
+                    {theTitle}
+                  </span>
                 </div>
               </>
             )}
@@ -606,7 +529,7 @@ export function Editor(props: { readonly?: boolean }) {
           {/* {firebaseRef && <Users users={firebaseRef.child("users")} />} */}
         </div>
         <div className="editor" style={{ width: size }}>
-          {props.readonly && (
+          {isReadonly && (
             <div
               className="readonly-notice"
               style={{ borderBottom: "1px solid #dbdbda" }}
@@ -638,7 +561,7 @@ export function Editor(props: { readonly?: boolean }) {
               // fontSize: 13,
               lineNumbers: "on",
               minimap: { enabled: false },
-              readOnly: !!props.readonly,
+              // readOnly: !!isReadonly,
               automaticLayout: true,
             }}
           />
@@ -693,7 +616,7 @@ export function Editor(props: { readonly?: boolean }) {
                   <span>Copy read-only link</span>
                 </a>
               </li>
-              {props.readonly || (
+              {isReadonly || (
                 <li>
                   <a
                     className="dropdown-item"

@@ -1,62 +1,87 @@
 {
   "rules": {
-    "user_notebooks": {
-      ".read": false,
-      "anonymous": {
-        ".read": false,
-        "$secretid": {
-          ".read": false,
-          ".write": "!data.exists() && auth === null"
-        }
-      },
-      "$userid": {
-        ".read": "$userid == auth.uid",
-        "$secretid": {
-          ".read": "$userid == auth.uid",
-          ".write": "!data.exists() && $userid == auth.uid"
-        }
-      }
-    },
     "users": {
       "anonymous": {
-        ".read": true,
-        ".write": false
+        ".read": false,
+        ".write": false,
+        "notebooks": {
+          "$secretid": {
+            "meta": {
+              ".read": true,
+              "uid": {
+                ".read": true,
+                ".write": "!data.exists()"
+              },
+              "title": {
+                ".read": true,
+                // TODO: make sure editors are the only allowed to edit title
+                ".write": true
+              }
+            },
+            "history": {
+              ".read": true,
+              "$revision": {
+                /* Prevent overwriting existing revisions. */
+                ".write": "data.val() === null"
+              }
+            },
+            "checkpoint": {
+              ".read": true,
+              /* Ensure author of checkpoint is the same as the author of the revision they're checkpointing. */
+              ".write": "root.child($secretid).child('history').child(newData.child('id').val()).child('a').val() === newData.child('a').val()",
+              ".validate": "newData.hasChildren(['a', 'o', 'id'])"
+            },
+            "users": {
+              ".read": true,
+              "$user": {
+                ".write": true
+              }
+            }
+          }
+        }
       },
       "$userid": {
         ".read": true,
-        ".write": "$userid == auth.uid"
-      }
-    },
-    "$secretid": {
-      "meta": {
-        ".read": true,
-        "uid": {
+        "profile": {
           ".read": true,
-          ".write": "!data.exists()"
+          ".write": "$userid == auth.uid"
         },
-        "title": {
-          ".read": true,
-          // TODO: make sure editors are the only allowed to edit title
-          ".write": true
-        }
-      },
-      "history": {
-        ".read": true,
-        "$revision": {
-          /* Prevent overwriting existing revisions. */
-          ".write": "data.val() === null"
-        }
-      },
-      "checkpoint": {
-        ".read": true,
-        /* Ensure author of checkpoint is the same as the author of the revision they're checkpointing. */
-        ".write": "root.child($secretid).child('history').child(newData.child('id').val()).child('a').val() === newData.child('a').val()",
-        ".validate": "newData.hasChildren(['a', 'o', 'id'])"
-      },
-      "users": {
-        ".read": true,
-        "$user": {
-          ".write": true
+        "notebooks": {
+          ".read": "$userid == auth.uid",
+          "$secretid": {
+            ".write": "$userid == auth.uid",
+            "meta": {
+              ".read": true,
+              "uid": {
+                ".read": true,
+                ".write": "!data.exists()"
+              },
+              "title": {
+                ".read": true,
+                // TODO: make sure editors are the only allowed to edit title
+                ".write": true
+              }
+            },
+            "history": {
+              ".read": true,
+              "$revision": {
+                /* Prevent overwriting existing revisions. */
+                ".write": "data.val() === null"
+              }
+            },
+            "checkpoint": {
+              ".read": true,
+              /* Ensure author of checkpoint is the same as the author of the revision they're checkpointing. */
+              ".write": "root.child($secretid).child('history').child(newData.child('id').val()).child('a').val() === newData.child('a').val()",
+              ".validate": "newData.hasChildren(['a', 'o', 'id'])"
+            },
+            "users": {
+              ".read": true,
+              "$user": {
+                ".write": true
+              }
+            }
+          }
         }
       }
     }

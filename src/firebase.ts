@@ -37,7 +37,7 @@ export async function addFirebase() {
 
 // Helper to get hash from end of URL or generate a random one.
 export function newNotebook(userId: string) {
-  const ref = app.database!().ref();
+  const ref = app.database!().ref(`users/${userId}/notebooks`);
   const document = ref.push(); // generate unique location.
 
   document.child("meta/uid").set(userId, function (err) {
@@ -48,13 +48,6 @@ export function newNotebook(userId: string) {
     if (err) console.log("error setting titile2", err);
   });
 
-  if (userId) {
-    const docList = app.database!()
-      .ref()
-      .child("user_notebooks/" + userId);
-    docList.push(document.key);
-  }
-
   if (typeof console !== "undefined" && process.env.NODE_ENV != "production") {
     console.log("Firebase data: ", document.toString());
   }
@@ -62,9 +55,12 @@ export function newNotebook(userId: string) {
   return document;
 }
 
-export function openByHash(currentRef: string) {
-  var ref = app.database!().ref();
-  return ref.child(currentRef);
+export function openByHash(userId: string, notebookId: string) {
+  return app.database!().ref().child(`users/${userId}/notebooks/${notebookId}`);
+}
+
+export function openByHashOld(currentRef: string) {
+  return app.database!().ref().child(currentRef);
 }
 
 export function logEvent(event: string) {
