@@ -1,45 +1,6 @@
 {
   "rules": {
     "users": {
-      "anonymous": {
-        ".read": false,
-        ".write": false,
-        "notebooks": {
-          "$secretid": {
-            "meta": {
-              ".read": true,
-              "uid": {
-                ".read": true,
-                ".write": "!data.exists()"
-              },
-              "title": {
-                ".read": true,
-                // TODO: make sure editors are the only allowed to edit title
-                ".write": true
-              }
-            },
-            "history": {
-              ".read": true,
-              "$revision": {
-                /* Prevent overwriting existing revisions. */
-                ".write": "data.val() === null"
-              }
-            },
-            "checkpoint": {
-              ".read": true,
-              /* Ensure author of checkpoint is the same as the author of the revision they're checkpointing. */
-              ".write": "root.child($secretid).child('history').child(newData.child('id').val()).child('a').val() === newData.child('a').val()",
-              ".validate": "newData.hasChildren(['a', 'o', 'id'])"
-            },
-            "users": {
-              ".read": true,
-              "$user": {
-                ".write": true
-              }
-            }
-          }
-        }
-      },
       "$userid": {
         ".read": true,
         "profile": {
@@ -49,7 +10,7 @@
         "notebooks": {
           ".read": "$userid == auth.uid",
           "$secretid": {
-            ".write": "$userid == auth.uid",
+            ".write": "$userid == auth.uid || ($userid == 'anonymous' && auth.uid == null)",
             "meta": {
               ".read": true,
               "uid": {
