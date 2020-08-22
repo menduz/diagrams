@@ -9,10 +9,47 @@ import React, {
 import { UserMenu } from "src/components/UserMenu";
 import { useAuth } from "src/Auth";
 import app from "firebase/app";
+import { Link } from "react-router-dom";
+import { navigateTo } from "src/Nav";
+
+type Notebook = {
+  meta: { title: string; uid: string };
+};
+
+function ListNotebooks(props: { data: Record<string, Notebook> }) {
+  return (
+    <div className="Box">
+      {Object.keys(props.data).map(($id) => (
+        <div key={$id} className="Box-row d-flex flex-items-center">
+          <div className="flex-auto">
+            <strong>
+              <Link to={`/notebook/${props.data[$id].meta.uid}/${$id}`}>
+                {props.data[$id].meta.title}
+              </Link>
+            </strong>
+            {/* <div className="text-small text-gray-light">Description</div> */}
+          </div>
+          <button
+            type="button"
+            className="btn btn-primary"
+            name="button"
+            onClick={() => {
+              navigateTo(`/notebook/${props.data[$id].meta.uid}/${$id}`);
+            }}
+          >
+            Open
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function List() {
   const auth = useAuth();
   const [myNotebooks, setMyNotebooks] = useState<any>(null);
+
+  document.title = "My notebooks - Sequence diagrams";
 
   useEffect(() => {
     if (auth.uid) {
@@ -56,10 +93,17 @@ export function List() {
             Here are the notebooks of your own.
           </div>
         </div>
-        <pre>{JSON.stringify(myNotebooks, null, 2)}</pre>
-        <div className="Subhead pt-4">
+        {myNotebooks ? (
+          <ListNotebooks data={myNotebooks} />
+        ) : (
+          <span className="m-1">
+            <span>Loading</span>
+            <span className="AnimatedEllipsis"></span>
+          </span>
+        )}
+        {/* <div className="Subhead pt-4">
           <div className="Subhead-heading">Shared with me</div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

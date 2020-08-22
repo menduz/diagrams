@@ -9,6 +9,7 @@ import React, {
 import { useAuth } from "../Auth";
 import { closeMenu } from "./Dropdown";
 import { MarkGithubIcon } from "@primer/octicons-react";
+import { navigateTo } from "src/Nav";
 
 export function UserMenu() {
   const auth = useAuth();
@@ -79,6 +80,17 @@ export function UserMenu() {
         </summary>
 
         <ul className="dropdown-menu dropdown-menu-sw">
+          <li>
+            <a
+              className="dropdown-item"
+              href={"#/list"}
+              onClick={() => {
+                navigateTo("/list");
+              }}
+            >
+              <span>My notebooks</span>
+            </a>
+          </li>
           <li>
             <a
               className="dropdown-item"

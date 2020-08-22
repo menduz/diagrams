@@ -26,6 +26,7 @@ import { useAuth, GitHubUser } from "../Auth";
 import { ResizeableSidebar } from "../components/Resize";
 import { UserList } from "../components/UserList";
 import { UserMenu } from "src/components/UserMenu";
+import { ErrorBoundary } from "src/components/ErrorBounday";
 declare var Firepad: any;
 declare var monaco: typeof monacoEditor;
 
@@ -275,7 +276,6 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
           options.userId = authCtx.uid;
         }
 
-
         setFirepad(Firepad.fromMonaco(firebaseRef, editorRef.current, options));
       } else if (isReadonly && staticContent) {
         setFirepad(null);
@@ -321,7 +321,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
       if (succeed) {
         logEvent("make_copy");
         setSize(defaultExpandedSize());
-        navigateTo(`/editor/${ref.key}`);
+        navigateTo(`/notebook/${owner}/${ref.key}`);
       }
     });
   }
@@ -550,21 +550,23 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
               </div>
             </div>
           )}
-          <Monaco
-            theme={theme}
-            language={language}
-            loading={<div>Loading editor...</div>}
-            value={""}
-            editorDidMount={handleEditorDidMount}
-            options={{
-              fontFamily: monospaceFont,
-              // fontSize: 13,
-              lineNumbers: "on",
-              minimap: { enabled: false },
-              // readOnly: !!isReadonly,
-              automaticLayout: true,
-            }}
-          />
+          <ErrorBoundary>
+            <Monaco
+              theme={theme}
+              language={language}
+              loading={<div>Loading editor...</div>}
+              value={""}
+              editorDidMount={handleEditorDidMount}
+              options={{
+                fontFamily: monospaceFont,
+                // fontSize: 13,
+                lineNumbers: "on",
+                minimap: { enabled: false },
+                // readOnly: !!isReadonly,
+                automaticLayout: true,
+              }}
+            />
+          </ErrorBoundary>
         </div>
       </ResizeableSidebar>
       <div className="content" style={{ left: size + 5 }}>
