@@ -1,21 +1,13 @@
 <style>
-  html,
-  body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    transform: scale(1);
-    transform-origin: 0 0;
-    overflow: hidden;
-  }
+  html, body { margin: 0; padding: 0; height: 100%; transform: scale(1); transform-origin: 0 0; overflow: hidden; }
+  #loading-placeholder { width: 100vw; height: 100vh; background: #fff; }
+  #loading-placeholder span { position: relative; font-size: 16px; color: #000; top: calc(50% - 16px); left: calc(50% - 70px); }
 </style>
-
 
 <meta name="description" content="Create sequence diagrams online in real time">
 <meta name="keywords" content="">
 
 <!-- Social: Facebook / Open Graph -->
-
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://diagrams.menduz.com">
 <meta property="og:title" content="Collaborative diagrams">
@@ -33,14 +25,31 @@
 <meta name="twitter:description" content="Create sequence diagrams online in real time">
 <meta name="twitter:image:src" content="https://diagrams.menduz.com/cover.png">
 
-<!-- Social: Google+ / Schema.org  -->
 <meta itemprop="name" content="Collaborative diagrams">
 <meta itemprop="description" content="Create sequence diagrams online in real time">
 <meta itemprop="image" content="https://diagrams.menduz.com/cover.png">
 
-<link href="index.css" rel="stylesheet" />
 <div id="loading-placeholder">
   <span>🦄 Loading...</span>
 </div>
+
+<script>
+  var globalConfig = {
+
+    // please don't let me down
+    firebaseConfig: {
+      apiKey: "AIzaSyBhfoK4AFBLsruM0sDJ-sAFyksh4FqMpC8",
+      authDomain: "diagrams-de8ed.firebaseapp.com",
+      databaseURL: "https://diagrams-de8ed.firebaseio.com",
+      projectId: "diagrams-de8ed",
+      storageBucket: "diagrams-de8ed.appspot.com",
+      messagingSenderId: "346071222923",
+      appId: "1:346071222923:web:4d57d09e64ea7ed1ee628e",
+      measurementId: "G-HLCQLCWE0G",
+    }
+  };
+</script>
+
+<link href="index.css" rel="stylesheet" />
 <script src="index.js" defer async></script>
 <div id="app"></div>

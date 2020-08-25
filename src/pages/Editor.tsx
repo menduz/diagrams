@@ -4,9 +4,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { useRouteMatch, useLocation } from "react-router-dom";
 import {
   logEvent,
-  newNotebook,
   openByHash,
   newNotebookWithContent,
+  logException,
 } from "../firebase";
 import { parseMD } from "../md";
 import marked from "marked";
@@ -21,6 +21,7 @@ import {
   RepoForkedIcon,
   AlertIcon,
   MarkGithubIcon,
+  DownloadIcon,
 } from "@primer/octicons-react";
 import { copyTextToClipboard, generateStaticLink } from "../helpers";
 import UseAnimations from "react-useanimations";
@@ -32,6 +33,7 @@ import { UserList } from "../components/UserList";
 import { UserMenu } from "src/components/UserMenu";
 import { ErrorBoundary } from "src/components/ErrorBounday";
 import { renderMarkdown } from "src/components/Markdown";
+import { downloadZip } from "src/export";
 
 declare var Firepad: any;
 declare var monaco: typeof monacoEditor;
@@ -462,17 +464,28 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
 
           <div className="p-2 d-flex">
             <UserList documentRef={firebaseRef} />
-            <DropdownShare label="Share" className="btn-invisible">
-              {/* <li>
+            <DropdownShare label="Export" className="btn-invisible">
+              <li>
                 <a
                   className="dropdown-item"
-                  onClick={makeGist}
+                  onClick={() => {
+                    downloadZip(editorRef.current!.getValue())
+                      .then(() => {
+                        logEvent("export-zip");
+                        closeMenu();
+                      })
+                      .catch((e) => {
+                        logException(e);
+                      });
+                  }}
                   href={document.location.toString()}
                 >
-                  <MarkGithubIcon size={16} className="mr-2" />
-                  <span>Create gist</span>
+                  <DownloadIcon size={16} className="mr-2" />
+                  <span>Download zip</span>
                 </a>
-              </li> */}
+              </li>
+            </DropdownShare>
+            <DropdownShare label="Share" className="btn-invisible">
               <li>
                 <a
                   className="dropdown-item"

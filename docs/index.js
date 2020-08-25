@@ -1,6 +1,6 @@
 /*! Menduz diagrams */
 const buildInformation = {
-  "date": "2020-08-22T19:17:58.952Z",
+  "date": "2020-08-25T13:19:52.980Z",
   "commit": "HEAD",
   "ref": "?"
 };
@@ -53643,18 +53643,8 @@ const buildInformation = {
 	var future = unwrapExports(fpFuture);
 	var fpFuture_1 = fpFuture.future;
 
-	let firebaseConfig = {
-	    apiKey: "AIzaSyBhfoK4AFBLsruM0sDJ-sAFyksh4FqMpC8",
-	    authDomain: "diagrams-de8ed.firebaseapp.com",
-	    databaseURL: "https://diagrams-de8ed.firebaseio.com",
-	    projectId: "diagrams-de8ed",
-	    storageBucket: "diagrams-de8ed.appspot.com",
-	    messagingSenderId: "346071222923",
-	    appId: "1:346071222923:web:4d57d09e64ea7ed1ee628e",
-	    measurementId: "G-HLCQLCWE0G",
-	};
 	async function addFirebase() {
-	    index_cjs$3.initializeApp(firebaseConfig);
+	    index_cjs$3.initializeApp(globalConfig.firebaseConfig);
 	    index_cjs$3.analytics();
 	    await index_cjs$3.auth().setPersistence(index_cjs$3.auth.Auth.Persistence.LOCAL);
 	    await new Promise((resolve, reject) => {
@@ -57677,6 +57667,15 @@ const buildInformation = {
 	        "#" +
 	        generateStaticLinkFragment(content));
 	}
+	function download(filename, text, mime) {
+	    var element = document.createElement("a");
+	    element.setAttribute("href", URL.createObjectURL(new Blob([text], { type: mime })));
+	    element.setAttribute("download", filename);
+	    element.style.display = "none";
+	    document.body.appendChild(element);
+	    element.click();
+	    document.body.removeChild(element);
+	}
 
 	var sizeMap = {
 	  small: 16,
@@ -57791,20 +57790,25 @@ const buildInformation = {
 	  verticalAlign: 'text-bottom'
 	};
 
-	function download(filename, text) {
-	    var element = document.createElement("a");
-	    element.setAttribute("href", URL.createObjectURL(new Blob([text], { type: "image/svg+xml" })));
-	    element.setAttribute("download", filename);
-	    element.style.display = "none";
-	    document.body.appendChild(element);
-	    element.click();
-	    document.body.removeChild(element);
+	function sanitizeSVG(original) {
+	    let ret = "";
+	    if (!original.includes("<?xml")) {
+	        ret = `<?xml version="1.0" encoding="UTF-8"?>\n` + ret;
+	    }
+	    if (!original.includes("<!DOCTYPE svg")) {
+	        ret =
+	            ret +
+	                `<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n`;
+	    }
+	    return ret + original;
 	}
 	function DownloadSvg(props) {
 	    const theRef = react_7(null);
 	    function dl() {
-	        const pre = "children" in props ? '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n' : "";
-	        download("diagram.svg", pre + theRef.current.innerHTML);
+	        const pre = "children" in props
+	            ? '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
+	            : "";
+	        download("diagram.svg", pre + theRef.current.innerHTML, "image/svg+xml");
 	    }
 	    return (react.createElement(react.Fragment, null,
 	        "dangerouslySetInnerHTML" in props ? (react.createElement("div", { ref: theRef, dangerouslySetInnerHTML: props.dangerouslySetInnerHTML })) : (react.createElement("div", { ref: theRef }, props.children)),
@@ -57852,7 +57856,7 @@ const buildInformation = {
 	        throw new AssertException(message);
 	    }
 	}
-	function layout(diagram) {
+	function processSequenceLayout(diagram) {
 	    diagram.signalsHeight_ = 0;
 	    diagram.actorsHeight_ = 0;
 	    diagram.width = 0;
@@ -57968,6 +57972,10 @@ const buildInformation = {
 	async function initializeDiagrams() {
 	    await injectScript("bower_components/underscore/underscore-min.js");
 	    await injectScript("bower_components/js-sequence-diagrams/dist/sequence-diagram-min.js");
+	    await injectScript("bower_components/jszip/jszip.min.js");
+	}
+	function parseDiagram(txt) {
+	    return Diagram.parse(txt.trim().replace(/^sequenceDiagram[\s\n\r]*/, ""));
 	}
 	function Line($) {
 	    return (react.createElement("line", { x1: $.x1 | 0, x2: $.x2 | 0, y1: $.y1 | 0, y2: $.y2 | 0, style: { strokeWidth: "2px" }, stroke: "#000000", fill: "none", strokeDasharray: $.linetype === undefined
@@ -58122,8 +58130,8 @@ const buildInformation = {
 	    const [diagram, setDiagram] = react_6(null);
 	    react_5(() => {
 	        try {
-	            const tmpDiagram = Diagram.parse(input.trim().replace(/^sequenceDiagram[\s\n\r]*/, ""));
-	            layout(tmpDiagram);
+	            const tmpDiagram = parseDiagram(input.trim().replace(/^sequenceDiagram[\s\n\r]*/, ""));
+	            processSequenceLayout(tmpDiagram);
 	            setWidth(tmpDiagram.width);
 	            setHeight(tmpDiagram.height);
 	            setError(null);
@@ -77765,12 +77773,14 @@ Thanks and enjoy!
 	    });
 	    return (react.createElement("pre", { ref: theRef, className: "vs" }, code));
 	}
+	function renderDotSVG(text) {
+	    return graphviz.dot(text, "svg", { wasmFolder: "wasm" });
+	}
 	function Dot(props) {
 	    const [html, setHtml] = react_6("Loading...");
 	    const [error, setError] = react_6();
 	    react_5(() => {
-	        graphviz
-	            .dot(props.code, "svg", { wasmFolder: "wasm" })
+	        renderDotSVG(props.code)
 	            .then(($) => {
 	            setError("");
 	            setHtml($);
@@ -77876,6 +77886,221 @@ Thanks and enjoy!
 	        }
 	    }
 	    return (react.createElement("code", { key: key, style: { color: "orange!important" } }, JSON.stringify($, null, 2)));
+	}
+
+	let currentPosition = 0;
+	let lines = [];
+	function readFile() {
+	    const initialPosition = currentPosition;
+	    const title = readTitle();
+	    if (title) {
+	        readWS();
+	        const codeBlock = readBlock();
+	        if (codeBlock) {
+	            return {
+	                type: "file",
+	                fileName: title,
+	                codeBlock,
+	            };
+	        }
+	    }
+	    currentPosition = initialPosition;
+	    return null;
+	}
+	function readWS() {
+	    while (true) {
+	        const line = peekLine();
+	        if (line === null)
+	            break;
+	        if (line.trim().length === 0) {
+	            eatLine();
+	        }
+	        else
+	            break;
+	    }
+	}
+	function readBlock() {
+	    const initialPosition = currentPosition;
+	    const codeOpening = /^(\s*```)(.*)$/;
+	    const line = eatLine();
+	    if (line !== null) {
+	        const opening = codeOpening.exec(line);
+	        if (opening) {
+	            const codeClosing = new RegExp(`^${opening[1]}$`);
+	            return {
+	                type: "code",
+	                indentation: opening[1].indexOf("`"),
+	                text: eatUntil(codeClosing),
+	                language: opening[2].trim(),
+	            };
+	        }
+	    }
+	    currentPosition = initialPosition;
+	    return null;
+	}
+	function readHeader() {
+	    const initialPosition = currentPosition;
+	    const headerMark = /^---$/;
+	    const line = eatLine();
+	    if (line !== null) {
+	        const opening = headerMark.exec(line);
+	        if (opening) {
+	            return {
+	                type: "header",
+	                text: eatUntil(headerMark),
+	            };
+	        }
+	    }
+	    currentPosition = initialPosition;
+	    return null;
+	}
+	function eatUntil(token) {
+	    let content = null;
+	    while (true) {
+	        const line = eatLine();
+	        if (line === null)
+	            break;
+	        if (token.test(line))
+	            break;
+	        content = content === null ? line : content + "\n" + line;
+	    }
+	    return content;
+	}
+	function parseFile() {
+	    const result = [];
+	    const header = readHeader();
+	    if (header)
+	        result.push(header);
+	    while (currentPosition < lines.length) {
+	        const ret = readFile() || readBlock() || readTitle();
+	        if (ret) {
+	            result.push(ret);
+	            continue;
+	        }
+	        const text = eatLine();
+	        if (text !== null) {
+	            if (text.trim().length) {
+	                result.push({ type: "text", text });
+	            }
+	        }
+	        else {
+	            break;
+	        }
+	    }
+	    return result;
+	}
+	function readTitle() {
+	    const initialState = currentPosition;
+	    readWS();
+	    const titleRE = /^\s*(#+)(.+)(#*)$/;
+	    const line = eatLine();
+	    if (line !== null) {
+	        const title = titleRE.exec(line);
+	        if (title) {
+	            return {
+	                type: "title",
+	                level: title[1].length,
+	                text: title[2].trim().replace(/(#+)$/, "").trim(),
+	            };
+	        }
+	    }
+	    currentPosition = initialState;
+	    return null;
+	}
+	function eatLine() {
+	    if (currentPosition >= lines.length)
+	        return null;
+	    const ret = lines[currentPosition];
+	    currentPosition++;
+	    return ret;
+	}
+	function peekLine(forward = 0) {
+	    if (currentPosition + forward >= lines.length)
+	        return null;
+	    return lines[currentPosition + forward];
+	}
+	function cheapMd(document) {
+	    lines = document.split(/\r\n|\r|\n/gm);
+	    currentPosition = 0;
+	    return parseFile();
+	}
+
+	function generateImage(svgContent, original, files, sectionName) {
+	    const sanitizedText = original
+	        .text.replace(/&/g, "&amp;")
+	        .replace(/</g, "&lt;")
+	        .replace(/>/g, "&gt;");
+	    const path = `images/fig-${sectionName}-${files.size}.svg`;
+	    files.set(path, svgContent);
+	    return `\n<!--\n\`\`\`${original.language || ""}\n${sanitizedText}\n\`\`\`\n-->\n![${path}](${path})\n`;
+	}
+	async function renderCheapMd($, files, sectionName) {
+	    if ($.type === "title") {
+	        switch ($.level) {
+	            case 1:
+	                return `\n# ${$.text}\n`;
+	            case 2:
+	                return `\n## ${$.text}\n`;
+	            case 3:
+	                return `\n### ${$.text}\n`;
+	            case 4:
+	                return `\n#### ${$.text}\n`;
+	            case 5:
+	                return `\n##### ${$.text}\n`;
+	            default:
+	                return `\n###### ${$.text}\n`;
+	        }
+	    }
+	    else if ($.type === "file") {
+	        return ((await renderCheapMd($.fileName, files, sectionName)) +
+	            (await renderCheapMd($.codeBlock, files, sectionName)));
+	    }
+	    else if ($.type === "code") {
+	        try {
+	            if ($.language == "dot") {
+	                return generateImage(await renderDotSVG($.text), $, files, sectionName);
+	            }
+	            if ($.language == "sequence") {
+	                const dom = document.createElement("div");
+	                const tmpDiagram = parseDiagram($.text);
+	                processSequenceLayout(tmpDiagram);
+	                reactDom.render(react.createElement(RenderDiagram, { diagram: tmpDiagram }), dom);
+	                const x = dom.querySelector("svg");
+	                return generateImage(sanitizeSVG(x.outerHTML), $, files, sectionName);
+	            }
+	        }
+	        catch (e) {
+	            console.error(e);
+	        }
+	        return "```" + ($.language || "") + "\n" + $.text + "\n```\n";
+	    }
+	    else if ($.type === "text") {
+	        return "\n" + $.text + "\n";
+	    }
+	    else {
+	        return JSON.stringify($, null, 2);
+	    }
+	}
+	async function downloadZip(md) {
+	    const files = new Map();
+	    const parts = cheapMd(md);
+	    let rendered = [];
+	    let currentSection = 0;
+	    for (let part of parts) {
+	        if (part.type == "header") {
+	            currentSection++;
+	        }
+	        rendered.push(await renderCheapMd(part, files, currentSection.toString()));
+	    }
+	    files.set("index.md", rendered.join(""));
+	    const zipFile = new JSZip();
+	    for (let [k, v] of files) {
+	        zipFile.file(k, v);
+	    }
+	    const zipBlob = await zipFile.generateAsync({
+	        type: "blob",
+	    });
+	    download("export.zip", zipBlob, "application/zip");
 	}
 
 	marked.setOptions({
@@ -78138,6 +78363,20 @@ Thanks and enjoy!
 	                        react.createElement("span", { className: "AnimatedEllipsis" })))),
 	                react.createElement("div", { className: "p-2 d-flex" },
 	                    react.createElement(UserList, { documentRef: firebaseRef }),
+	                    react.createElement(DropdownShare, { label: "Export", className: "btn-invisible" },
+	                        react.createElement("li", null,
+	                            react.createElement("a", { className: "dropdown-item", onClick: () => {
+	                                    downloadZip(editorRef.current.getValue())
+	                                        .then(() => {
+	                                        logEvent$1("export-zip");
+	                                        closeMenu();
+	                                    })
+	                                        .catch((e) => {
+	                                        logException(e);
+	                                    });
+	                                }, href: document.location.toString() },
+	                                react.createElement(DownloadIcon, { size: 16, className: "mr-2" }),
+	                                react.createElement("span", null, "Download zip")))),
 	                    react.createElement(DropdownShare, { label: "Share", className: "btn-invisible" },
 	                        react.createElement("li", null,
 	                            react.createElement("a", { className: "dropdown-item", onClick: copyReadOnlyLink, href: document.location.toString() },

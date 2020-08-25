@@ -62,13 +62,16 @@ function Code($: { language: string; code: string }) {
   );
 }
 
+export function renderDotSVG(text: string) {
+  return graphviz.dot(text, "svg", { wasmFolder: "wasm" });
+}
+
 function Dot(props: { code: string }) {
   const [html, setHtml] = useState("Loading...");
   const [error, setError] = useState<string>();
 
   useEffect(() => {
-    graphviz
-      .dot(props.code, "svg", { wasmFolder: "wasm" })
+    renderDotSVG(props.code)
       .then(($) => {
         setError("");
         setHtml($);

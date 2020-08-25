@@ -77,3 +77,27 @@ export function generateStaticLink(content: string) {
     generateStaticLinkFragment(content)
   );
 }
+
+export function indent(str: string, indentation: string = "  ") {
+  if (!str.replace) {
+    console.trace();
+  }
+  return str.replace(/^(.*)$/gm, indentation + "$1").replace(/^\s+$/gm, "");
+}
+
+export function download(filename: string, text: BlobPart, mime: string) {
+  var element = document.createElement("a");
+
+  element.setAttribute(
+    "href",
+    URL.createObjectURL(new Blob([text], { type: mime }))
+  );
+  element.setAttribute("download", filename);
+
+  element.style.display = "none";
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}

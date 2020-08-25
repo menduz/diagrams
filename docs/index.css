@@ -65,18 +65,6 @@ svg > g[transform="translate(0.000000,17.000000) scale(0.100000,-0.100000)"] {
 section {
   margin-bottom: 65px; }
 
-#loading-placeholder {
-  width: 100vw;
-  height: 100vh;
-  background: #fff; }
-
-#loading-placeholder span {
-  position: relative;
-  font-size: 16px;
-  color: #000;
-  top: calc(50% - 16px);
-  left: calc(50% - 70px); }
-
 .home {
   font-size: 16px;
   padding: 104px 65px; }

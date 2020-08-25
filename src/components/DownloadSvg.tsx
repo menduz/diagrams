@@ -1,21 +1,20 @@
 import React, { useRef, ReactNode } from "react";
 import { DownloadIcon } from "@primer/octicons-react";
+import { download } from "src/helpers";
 
-function download(filename: string, text: string) {
-  var element = document.createElement("a");
 
-  element.setAttribute(
-    "href",
-    URL.createObjectURL(new Blob([text], { type: "image/svg+xml" }))
-  );
-  element.setAttribute("download", filename);
 
-  element.style.display = "none";
-  document.body.appendChild(element);
-
-  element.click();
-
-  document.body.removeChild(element);
+export function sanitizeSVG(original: string): string {
+  let ret = "";
+  if (!original.includes("<?xml")) {
+    ret = `<?xml version="1.0" encoding="UTF-8"?>\n` + ret;
+  }
+  if (!original.includes("<!DOCTYPE svg")) {
+    ret =
+      ret +
+      `<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n`;
+  }
+  return ret + original;
 }
 
 export function DownloadSvg(
@@ -27,9 +26,11 @@ export function DownloadSvg(
 
   function dl() {
     const pre =
-      "children" in props ? '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n' : "";
+      "children" in props
+        ? '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
+        : "";
 
-    download("diagram.svg", pre + theRef.current!.innerHTML);
+    download("diagram.svg", pre + theRef.current!.innerHTML, "image/svg+xml");
   }
 
   return (

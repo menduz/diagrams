@@ -4,20 +4,10 @@ import "firebase/database";
 import "firebase/analytics";
 import future from "fp-future";
 
-// Your web app's Firebase configuration
-let firebaseConfig = {
-  apiKey: "AIzaSyBhfoK4AFBLsruM0sDJ-sAFyksh4FqMpC8",
-  authDomain: "diagrams-de8ed.firebaseapp.com",
-  databaseURL: "https://diagrams-de8ed.firebaseio.com",
-  projectId: "diagrams-de8ed",
-  storageBucket: "diagrams-de8ed.appspot.com",
-  messagingSenderId: "346071222923",
-  appId: "1:346071222923:web:4d57d09e64ea7ed1ee628e",
-  measurementId: "G-HLCQLCWE0G",
-};
+declare var globalConfig: { firebaseConfig: any };
 
 export async function addFirebase() {
-  app.initializeApp(firebaseConfig);
+  app.initializeApp(globalConfig.firebaseConfig);
   app.analytics();
 
   await app.auth!().setPersistence(app.auth!.Auth.Persistence.LOCAL);
@@ -81,7 +71,12 @@ export function logPageView(page_location: string, page_path: string) {
 declare var Firepad: any;
 
 export async function newNotebookWithContent(content: string) {
-  const ret = future<{succeed: boolean, ref: app.database.Reference, data: any, owner: string}>();
+  const ret = future<{
+    succeed: boolean;
+    ref: app.database.Reference;
+    data: any;
+    owner: string;
+  }>();
   let owner =
     (app.auth().currentUser && app.auth().currentUser!.uid) || "anonymous";
 

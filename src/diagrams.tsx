@@ -109,7 +109,7 @@ function assert(exp: boolean, message: string): asserts exp {
   }
 }
 
-function layout(diagram: ParsedDiagram) {
+export function processSequenceLayout(diagram: ParsedDiagram) {
   diagram.signalsHeight_ = 0;
   diagram.actorsHeight_ = 0;
   diagram.width = 0;
@@ -280,6 +280,11 @@ export async function initializeDiagrams() {
   await injectScript(
     "bower_components/js-sequence-diagrams/dist/sequence-diagram-min.js"
   );
+  await injectScript("bower_components/jszip/jszip.min.js");
+}
+
+export function parseDiagram(txt: string) {
+  return Diagram.parse(txt.trim().replace(/^sequenceDiagram[\s\n\r]*/, ""));
 }
 
 function Line($: {
@@ -426,7 +431,7 @@ function ActorSVG($: {
   );
 }
 
-function RenderDiagram(props: { diagram: ParsedDiagram | null }) {
+export function RenderDiagram(props: { diagram: ParsedDiagram | null }) {
   const { diagram: $ } = props;
   if (!$) return <div>Empty diagram</div>;
 
@@ -669,10 +674,10 @@ export function SequenceDiagram(props: { input: string; className?: string }) {
 
   useEffect(() => {
     try {
-      const tmpDiagram = Diagram.parse(
+      const tmpDiagram = parseDiagram(
         input.trim().replace(/^sequenceDiagram[\s\n\r]*/, "")
       );
-      layout(tmpDiagram);
+      processSequenceLayout(tmpDiagram);
       setWidth(tmpDiagram.width);
       setHeight(tmpDiagram.height);
       setError(null);
