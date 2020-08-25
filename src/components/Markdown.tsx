@@ -153,6 +153,8 @@ export function renderMarkdown($: marked.Token, key: number = 0): any {
       return <div key={key} className="my-2" />;
     } else if ($.type === "escape") {
       return <span key={key}>{unescape($)}</span>;
+    } else if ($.type === "br") {
+      return <br key={key} />;
     } else if ($.type === "hr") {
       return <hr key={key} />;
     } else if ($.type === "list_item") {

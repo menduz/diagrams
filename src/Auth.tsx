@@ -64,8 +64,6 @@ export type GitHubUser = {
 
 export type AuthData = {
   user: FirebaseUser;
-  gh: GitHubUser;
-  octokit: Octokit;
 };
 
 function storeCredential(key: string, credential: string) {
@@ -134,30 +132,27 @@ function useProvideAuth() {
 
     if (token) {
       const octokit = new Octokit({ auth: token });
-      const { data }: { data: GitHubUser } = await octokit.request("/user");
 
-      if (data.id) {
-        if (refresh) {
-          app
-            .database()
-            .ref()
-            .child("users/" + user.uid + "/profile")
-            .set({
-              login: data.login,
-              id: data.id,
-              name: data.name,
-              avatar_url: data.avatar_url,
-            });
+      octokit.request("/user").then((result) => {
+        if (result.data.id) {
+          if (refresh) {
+            app
+              .database()
+              .ref()
+              .child("users/" + user.uid + "/profile")
+              .set({
+                login: result.data.login,
+                id: result.data.id,
+                name: result.data.name,
+                avatar_url: result.data.avatar_url,
+              });
+          }
         }
-
-        setData({ user, octokit, gh: data });
-        return user;
-      }
+      });
     }
 
-    signout();
-
-    return null;
+    setData({ user });
+    return user;
   }
 
   // Subscribe to user on mount
