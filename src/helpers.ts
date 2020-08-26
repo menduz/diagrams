@@ -101,3 +101,31 @@ export function download(filename: string, text: BlobPart, mime: string) {
 
   document.body.removeChild(element);
 }
+
+/**
+ * Convert string to unique id
+ */
+export function slug(value: string, seen: Record<string, number>): string {
+  let slug = value
+    .toLowerCase()
+    .trim()
+    // remove html tags
+    .replace(/<[!\/a-z].*?>/gi, "")
+    // remove unwanted chars
+    .replace(
+      /[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g,
+      ""
+    )
+    .replace(/\s/g, "-");
+
+  if (seen.hasOwnProperty(slug)) {
+    const originalSlug = slug;
+    do {
+      seen[originalSlug]++;
+      slug = originalSlug + "-" + seen[originalSlug];
+    } while (seen.hasOwnProperty(slug));
+  }
+  seen[slug] = 0;
+
+  return slug;
+}

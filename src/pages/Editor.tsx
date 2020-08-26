@@ -22,8 +22,14 @@ import {
   AlertIcon,
   MarkGithubIcon,
   DownloadIcon,
+  MarkdownIcon,
 } from "@primer/octicons-react";
-import { copyTextToClipboard, generateStaticLink } from "../helpers";
+import {
+  copyTextToClipboard,
+  generateStaticLink,
+  download,
+  slug,
+} from "../helpers";
 import UseAnimations from "react-useanimations";
 import skipBack from "react-useanimations/lib/skipBack";
 import { navigateTo } from "../Nav";
@@ -215,14 +221,6 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
   }
 
   function copyEditableLink() {
-    copyTextToClipboard(document.location.toString()).then(() => {
-      editorRef.current!.focus();
-      logEvent("share_editable");
-      closeMenu();
-    });
-  }
-
-  function makeGist() {
     copyTextToClipboard(document.location.toString()).then(() => {
       editorRef.current!.focus();
       logEvent("share_editable");
@@ -429,7 +427,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
                 // fontSize: 13,
                 lineNumbers: "on",
                 minimap: { enabled: false },
-                // readOnly: !!isReadonly,
+                readOnly: !!isReadonly,
                 automaticLayout: true,
               }}
             />
@@ -469,7 +467,10 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
                 <a
                   className="dropdown-item"
                   onClick={() => {
-                    downloadZip(editorRef.current!.getValue())
+                    downloadZip(
+                      theTitle || "diagrams",
+                      editorRef.current!.getValue()
+                    )
                       .then(() => {
                         logEvent("export-zip");
                         closeMenu();
@@ -482,6 +483,25 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
                 >
                   <DownloadIcon size={16} className="mr-2" />
                   <span>Download zip</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  className="dropdown-item"
+                  onClick={() => {
+                    download(
+                      `${slug(theTitle || "diagrams", {})}.md`,
+                      editorRef.current!.getValue(),
+                      "text/markdown"
+                    );
+
+                    logEvent("export-md");
+                    closeMenu();
+                  }}
+                  href={document.location.toString()}
+                >
+                  <MarkdownIcon size={16} className="mr-2" />
+                  <span>Download Markdown</span>
                 </a>
               </li>
             </DropdownShare>

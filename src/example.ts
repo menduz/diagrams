@@ -17,10 +17,10 @@ We use it for architecture discussions and planning with my team, it helps a lot
 ### Sequence diagrams
 
 \`\`\`sequence
-Andrew->China: Says Hello
-Note right of China: China thinks about it
-China-->Andrew: How are you?
-Andrew->>China: I am good thanks!
+Alice->Bob: Says Hello
+Note right of Bob: Bob thinks about it
+Bob-->Alice: How are you?
+Alice->>Bob: I am good thanks!
 \`\`\`
 
 ### Graphviz

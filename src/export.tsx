@@ -4,21 +4,24 @@ import { parseDiagram, RenderDiagram, processSequenceLayout } from "./diagrams";
 import ReactDOM from "react-dom";
 import React from "react";
 import { sanitizeSVG } from "./components/DownloadSvg";
-import { download } from "./helpers";
+import { download, slug } from "./helpers";
 declare var JSZip: any;
 
 function generateImage(
   svgContent: string,
   original: CodeBlock,
   files: Map<string, string>,
-  sectionName: string
+  sectionName: string,
+  takenNames: Record<string, number>
 ): string {
   const sanitizedText = original
     .text!.replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  const path = `images/fig-${sectionName}-${files.size}.svg`;
+  const slugName = slug(`fig-${sectionName}`, takenNames);
+
+  const path = `images/${slugName}.svg`;
   files.set(path, svgContent);
 
   return `\n<!--\n\`\`\`${
@@ -29,7 +32,8 @@ function generateImage(
 async function renderCheapMd(
   $: Content,
   files: Map<string, string>,
-  sectionName: string
+  sectionName: string,
+  takenNames: Record<string, number>
 ): Promise<string> {
   if ($.type === "title") {
     switch ($.level) {
@@ -48,8 +52,8 @@ async function renderCheapMd(
     }
   } else if ($.type === "file") {
     return (
-      (await renderCheapMd($.fileName, files, sectionName)) +
-      (await renderCheapMd($.codeBlock, files, sectionName))
+      (await renderCheapMd($.fileName, files, sectionName, takenNames)) +
+      (await renderCheapMd($.codeBlock, files, sectionName, takenNames))
     );
   } else if ($.type === "code") {
     try {
@@ -58,7 +62,8 @@ async function renderCheapMd(
           await renderDotSVG($.text!),
           $,
           files,
-          sectionName
+          sectionName,
+          takenNames
         );
       }
       if ($.language == "sequence") {
@@ -70,7 +75,13 @@ async function renderCheapMd(
         ReactDOM.render(<RenderDiagram diagram={tmpDiagram} />, dom);
         const x = dom.querySelector("svg");
 
-        return generateImage(sanitizeSVG(x!.outerHTML), $, files, sectionName);
+        return generateImage(
+          sanitizeSVG(x!.outerHTML),
+          $,
+          files,
+          sectionName,
+          takenNames
+        );
       }
     } catch (e) {
       console.error(e);
@@ -84,22 +95,27 @@ async function renderCheapMd(
   }
 }
 
-export async function downloadZip(md: string) {
+export async function downloadZip(title: string, md: string) {
   const files = new Map<string, string>();
   const parts = cheapMd(md);
 
   let rendered: string[] = [];
 
-  let currentSection = 0;
+  let takenNames: Record<string, number> = {};
+  let sectionSlug = slug(title, takenNames);
 
   for (let part of parts) {
     if (part.type == "header") {
-      currentSection++;
+      sectionSlug = slug(part.text || "", takenNames);
+    } else if (part.type == "file") {
+      sectionSlug = slug(part.fileName.text || "", takenNames);
     }
-    rendered.push(await renderCheapMd(part, files, currentSection.toString()));
+    rendered.push(
+      await renderCheapMd(part, files, sectionSlug, takenNames)
+    );
   }
 
-  files.set("index.md", rendered.join(""));
+  files.set(`${slug(title || "index", {})}.md`, rendered.join(""));
 
   const zipFile = new JSZip();
 
@@ -111,5 +127,5 @@ export async function downloadZip(md: string) {
     type: "blob",
   });
 
-  download("export.zip", zipBlob, "application/zip");
+  download(`${slug(title || "export", {})}.zip`, zipBlob, "application/zip");
 }
