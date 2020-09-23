@@ -92,7 +92,8 @@ function MakeCopyMenu(props: {
               if (!authCtx.uid) {
                 await authCtx.signin();
               }
-              props.makeCopy({ isPrivate: true, publicRead: false });
+              closeMenu()
+              await props.makeCopy({ isPrivate: true, publicRead: false });
             }}
             href={document.location.toString()}
           >
@@ -104,7 +105,8 @@ function MakeCopyMenu(props: {
           <a
             className="dropdown-item"
             onClick={async () => {
-              props.makeCopy({ isPrivate: false, publicRead: true });
+              closeMenu()
+              await props.makeCopy({ isPrivate: false, publicRead: true });
             }}
             href={document.location.toString()}
           >
