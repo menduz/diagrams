@@ -7,6 +7,7 @@ import {
   openByHash,
   newNotebookWithContent,
   logException,
+  NotebookOptions,
 } from "../firebase";
 import { parseMD } from "../md";
 import marked from "marked";
@@ -66,26 +67,86 @@ function loadSize() {
   return window.innerWidth * 0.3;
 }
 
+function MakeCopyMenu(props: {
+  loading: boolean;
+  makeCopy: (options: NotebookOptions) => Promise<any>;
+}) {
+  const authCtx = useAuth();
+
+  return (
+    <details className="dropdown details-reset details-overlay d-inline-block mr-2">
+      <summary aria-haspopup="true">
+        <span className={`btn`}>
+          <RepoForkedIcon size={16} />
+          Make a copy
+          {props.loading && <span className="AnimatedEllipsis"></span>}
+          <div className="dropdown-caret"></div>
+        </span>
+      </summary>
+
+      <ul className="dropdown-menu dropdown-menu-se" style={{ width: 300 }}>
+        <li>
+          <a
+            className="dropdown-item"
+            onClick={async () => {
+              if (!authCtx.uid) {
+                await authCtx.signin();
+              }
+              props.makeCopy({ isPrivate: true, publicRead: false });
+            }}
+            href={document.location.toString()}
+          >
+            {authCtx.uid ? null : <MarkGithubIcon size={16} className="mr-2" />}
+            <span>Make private copy</span>
+          </a>
+        </li>
+        <li>
+          <a
+            className="dropdown-item"
+            onClick={async () => {
+              props.makeCopy({ isPrivate: false, publicRead: true });
+            }}
+            href={document.location.toString()}
+          >
+            <span>Make public copy</span>
+          </a>
+        </li>
+      </ul>
+    </details>
+  );
+}
+
 export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
   const editorRef = useRef<monacoEditor.editor.IStandaloneCodeEditor>();
 
-  const [firebaseRef, setFirebaseRef] = useState<any>(null);
+  const [firebaseRef, setFirebaseRef] = useState<app.database.Reference | null>(
+    null
+  );
   const [loadingCopy, setLoadingCopy] = useState<boolean>(false);
   const [loadingSave, setLoadingSave] = useState<boolean>(false);
   const [firepad, setFirepad] = useState<any>(null);
   const [md, setMd] = useState<marked.Token[]>([]);
+  const [meta, setMeta] = useState<any>(null);
   const match = useRouteMatch<{ user: string; notebook: string }>();
   const location = useLocation();
   const authCtx = useAuth();
 
   const isOldModel = "notepadId" in match.params;
-  const isReadonly = props.readonly || isOldModel;
+  let isReadonly = props.readonly || isOldModel;
+
+  if (
+    meta &&
+    meta.sharing &&
+    meta.sharing.isPrivate &&
+    meta.uid != authCtx.uid
+  ) {
+    isReadonly = true;
+  }
 
   const [size, setSize] = useState(props.readonly ? 0 : loadSize());
   const [staticContent, setStaticContent] = useState<string>();
   const [, setIsEditorReady] = useState(false);
   const [author, setAuthor] = useState<GitHubUser | null>(null);
-  const [meta, setMeta] = useState<any>(null);
 
   let theTitle: string | null = null;
 
@@ -151,10 +212,22 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
           options.userId = authCtx.uid;
         }
 
-        setFirepad(Firepad.fromMonaco(firebaseRef, editorRef.current, options));
+        if (isReadonly) {
+          const headless = new Firepad.Headless(firebaseRef);
+          headless.getText(function (text: string) {
+            setStaticContent(text);
+            headless.dispose();
+          });
+          setFirepad(null);
+          editorRef.current.setValue(staticContent || "");
+        } else {
+          setFirepad(
+            Firepad.fromMonaco(firebaseRef, editorRef.current, options)
+          );
+        }
       } else if (isReadonly && staticContent) {
         setFirepad(null);
-        editorRef.current.setValue(staticContent || "<Empty>");
+        editorRef.current.setValue(staticContent || "");
       }
     }
   }, [editorRef.current, firebaseRef, staticContent, isReadonly]);
@@ -179,11 +252,11 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
     }
   }, [size]);
 
-  async function makeCopy() {
+  async function makeCopy(options: NotebookOptions) {
     const val = editorRef.current!.getValue();
 
     setLoadingCopy(true);
-    const { ref, succeed, owner } = await newNotebookWithContent(val);
+    const { ref, succeed, owner } = await newNotebookWithContent(val, options);
     setLoadingCopy(false);
 
     if (succeed) {
@@ -228,75 +301,22 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
     });
   }
 
-  function MakeCopyMenu() {
-    if (authCtx.uid) {
-      return (
-        <button
-          className="btn tooltipped tooltipped-se mr-2"
-          aria-label="Makes a copy"
-          onClick={makeCopy}
-          aria-disabled={!authCtx.uid}
-        >
-          <RepoForkedIcon size={16} />
-          <span>
-            Make a copy
-            {loadingCopy && <span className="AnimatedEllipsis"></span>}
-          </span>
-        </button>
-      );
-    }
-
-    return (
-      <details className="dropdown details-reset details-overlay d-inline-block mr-2">
-        <summary aria-haspopup="true">
-          <span className={`btn`}>
-            <RepoForkedIcon size={16} />
-            Make a copy
-            {loadingCopy && <span className="AnimatedEllipsis"></span>}
-            <div className="dropdown-caret"></div>
-          </span>
-        </summary>
-
-        <ul className="dropdown-menu dropdown-menu-se" style={{ width: 300 }}>
-          <li>
-            <a
-              className="dropdown-item"
-              onClick={async () => {
-                setLoadingCopy(true);
-                await authCtx.signin();
-                makeCopy();
-              }}
-              href={document.location.toString()}
-            >
-              <MarkGithubIcon size={16} className="mr-2" />
-              <span>Sign-in with GitHub</span>
-            </a>
-          </li>
-          <li>
-            <a
-              className="dropdown-item"
-              onClick={async () => {
-                setLoadingCopy(true);
-                makeCopy();
-              }}
-              href={document.location.toString()}
-            >
-              <span>Continue anonymously</span>
-            </a>
-          </li>
-        </ul>
-      </details>
-    );
-  }
-
   useEffect(() => {
     if (firebaseRef) {
-      firebaseRef.child("meta").once("value", function (a: any) {
-        setMeta(a || null);
-      });
+      firebaseRef.child("meta").once(
+        "value",
+        function (a) {
+          setMeta(a.toJSON() || null);
+        },
+        function (e) {
+          console.error(e);
+          logEvent("access_denied");
+          navigateTo("/list");
+        }
+      );
 
-      if (theTitle) {
-        firebaseRef.child("meta/title").set(theTitle, (err: Error) => {
+      if (theTitle && !isReadonly) {
+        firebaseRef.child("meta/title").set(theTitle, (err) => {
           err && console.log("err, cant set meta");
         });
       }
@@ -310,7 +330,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
       app
         .database()
         .ref()
-        .child(`users/${meta.child("uid").val()}/profile`)
+        .child(`users/${meta.uid}/profile`)
         .once("value", function (owner: any) {
           setAuthor(owner.toJSON());
         });
@@ -331,13 +351,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
           style={{ width: size }}
         >
           <div className="p-2 d-flex">
-            {staticContent ? (
-              <div className="flex-self-center ml-2">
-                <span className="css-truncate css-truncate-overflow">
-                  {theTitle}
-                </span>
-              </div>
-            ) : author ? (
+            {author ? (
               <>
                 <img
                   className="avatar avatar-small m-2"
@@ -389,9 +403,8 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
             )}
           </div>
           <div className="p-2">
-            <MakeCopyMenu />
+            <MakeCopyMenu loading={loadingCopy} makeCopy={makeCopy} />
           </div>
-          {/* {firebaseRef && <Users users={firebaseRef.child("users")} />} */}
         </div>
         <div className="editor" style={{ width: size }}>
           {isReadonly && (

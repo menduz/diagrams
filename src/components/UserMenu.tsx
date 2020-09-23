@@ -69,11 +69,11 @@ export function UserMenu() {
             <span className="mr-2">{auth.data.user.displayName}</span>
             <img
               className="avatar avatar-small"
-              alt={auth.data.user.displayName}
+              alt={auth.data.user.displayName!}
               src={`${auth.data.user.photoURL}&s=40`}
               width="20"
               height="20"
-              aria-label={auth.data.user.displayName}
+              aria-label={auth.data.user.displayName!}
             />
             <div className="dropdown-caret"></div>
           </span>

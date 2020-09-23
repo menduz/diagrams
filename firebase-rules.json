@@ -2,7 +2,6 @@
   "rules": {
     "users": {
       "$userid": {
-        ".read": true,
         "profile": {
           ".read": true,
           ".write": "$userid == auth.uid"
@@ -10,36 +9,37 @@
         "notebooks": {
           ".read": "$userid == auth.uid",
           "$secretid": {
-            ".write": "$userid == auth.uid || ($userid == 'anonymous' && auth.uid == null)",
+            // read only by editors when sharing/isPrivate == true
+            ".read": "(data.child('meta/sharing/isPrivate').exists() == false) || (data.child('meta/sharing/isPrivate').val() == false) || (data.child('meta/sharing/isPrivate').val() == true && $userid == auth.uid) || ($userid == 'anonymous') || (data.child('meta/sharing/publicRead').val() == true)",
+            // write by editors || everyone if anonymous
+            ".write": "(data.child('meta/sharing/isPrivate').exists() == false) || (data.child('meta/sharing/isPrivate').val() == false) || ($userid == auth.uid) || ($userid == 'anonymous')",
             "meta": {
-              ".read": true,
+              "sharing": {
+                // only the owner can set the document public/private
+                ".write": "$userid == auth.uid",
+                ".validate": "newData.hasChildren(['isPrivate', 'publicRead'])"
+              },
               "uid": {
-                ".read": true,
-                ".write": "!data.exists()"
+                ".validate": "!data.exists()"
               },
               "title": {
-                ".read": true,
-                // TODO: make sure editors are the only allowed to edit title
-                ".write": true
+                ".validate": "newData.isString() && newData.val().length > 0"
               }
             },
             "history": {
-              ".read": true,
               "$revision": {
                 /* Prevent overwriting existing revisions. */
-                ".write": "data.val() === null"
+                ".validate": "data.val() === null"
               }
             },
             "checkpoint": {
-              ".read": true,
               /* Ensure author of checkpoint is the same as the author of the revision they're checkpointing. */
-              ".write": "root.child($secretid).child('history').child(newData.child('id').val()).child('a').val() === newData.child('a').val()",
+              ".write": "root.child('users/' + $userid + '/notebooks/' + $secretid).child('history').child( newData.child('id').val() ).child('a').val() === newData.child('a').val()",
               ".validate": "newData.hasChildren(['a', 'o', 'id'])"
             },
             "users": {
-              ".read": true,
               "$user": {
-                ".write": true
+                ".write": "(auth != null && ($user == auth.uid)) || auth == null"
               }
             }
           }

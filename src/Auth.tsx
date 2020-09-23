@@ -6,7 +6,6 @@ import React, {
   Context,
 } from "react";
 
-import { Octokit } from "@octokit/rest";
 import { logEvent, logException } from "./firebase";
 import app from "firebase/app";
 import "firebase/database";
@@ -63,7 +62,7 @@ export type GitHubUser = {
 };
 
 export type AuthData = {
-  user: FirebaseUser;
+  user: app.User;
 };
 
 function storeCredential(key: string, credential: string) {
@@ -97,13 +96,28 @@ function useProvideAuth() {
     return app
       .auth()
       .signInWithPopup(provider)
-      .then((response: any) => {
-        if (response.credential) {
-          storeCredential(response.user.uid, response.credential.accessToken);
+      .then((response) => {
+        if (response.credential && response.user) {
+          if (
+            response.additionalUserInfo &&
+            response.additionalUserInfo.providerId == "github.com"
+          ) {
+            const data = response.additionalUserInfo.profile as GitHubUser;
+            app
+              .database()
+              .ref()
+              .child("users/" + response.user.uid + "/profile")
+              .set({
+                login: data.login,
+                id: data.id,
+                name: data.name,
+                avatar_url: data.avatar_url,
+              });
+          }
         }
         logEvent("sign_in");
 
-        const r = gotUser(response.user, true);
+        const r = gotUser(response.user!, true);
         r.then(() => setLoading(false));
         return r;
       })
@@ -125,32 +139,8 @@ function useProvideAuth() {
       });
   };
 
-  async function gotUser(user: FirebaseUser, refresh = false) {
-    let token = loadCredential(user.uid);
-
+  async function gotUser(user: app.User, refresh = false) {
     setUid(user.uid);
-
-    if (token) {
-      const octokit = new Octokit({ auth: token });
-
-      octokit.request("/user").then((result) => {
-        if (result.data.id) {
-          if (refresh) {
-            app
-              .database()
-              .ref()
-              .child("users/" + user.uid + "/profile")
-              .set({
-                login: result.data.login,
-                id: result.data.id,
-                name: result.data.name,
-                avatar_url: result.data.avatar_url,
-              });
-          }
-        }
-      });
-    }
-
     setData({ user });
     return user;
   }

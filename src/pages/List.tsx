@@ -12,7 +12,12 @@ import app from "firebase/app";
 import { Link } from "react-router-dom";
 import { navigateTo } from "src/Nav";
 import { DEFAULT_EXAMPLE } from "src/example";
-import { newNotebookWithContent, logEvent } from "src/firebase";
+import {
+  newNotebookWithContent,
+  logEvent,
+  NotebookOptions,
+} from "src/firebase";
+import { closeMenu } from "src/components/Dropdown";
 
 type Notebook = {
   meta: { title: string; uid: string };
@@ -73,11 +78,14 @@ export function List() {
     );
   }
 
-  async function newNotebook() {
+  async function newNotebook(content: string, options: NotebookOptions) {
     setCreating(true);
 
+    closeMenu();
+
     const { ref, succeed, owner } = await newNotebookWithContent(
-      DEFAULT_EXAMPLE
+      content,
+      options
     );
 
     setCreating(false);
@@ -107,9 +115,28 @@ export function List() {
               disabled={!!creating}
               className="btn btn-sm btn-primary"
               role="button"
-              onClick={newNotebook}
+              onClick={() =>
+                newNotebook(DEFAULT_EXAMPLE, {
+                  isPrivate: true,
+                  publicRead: false,
+                })
+              }
             >
-              New notebook
+              New private notebook
+              {creating && <span className="AnimatedEllipsis"></span>}
+            </button>
+            <button
+              disabled={!!creating}
+              className="btn btn-sm btn-primary"
+              role="button"
+              onClick={() =>
+                newNotebook(DEFAULT_EXAMPLE, {
+                  isPrivate: false,
+                  publicRead: true,
+                })
+              }
+            >
+              New public notebook
               {creating && <span className="AnimatedEllipsis"></span>}
             </button>
           </div>
