@@ -41,6 +41,8 @@ import { UserMenu } from "src/components/UserMenu";
 import { ErrorBoundary } from "src/components/ErrorBounday";
 import { renderMarkdown } from "src/components/Markdown";
 import { downloadZip } from "src/export";
+import { Notebook } from "src/types";
+import { SharingDetails } from "src/components/SharingDetails";
 
 declare var Firepad: any;
 declare var monaco: typeof monacoEditor;
@@ -92,7 +94,7 @@ function MakeCopyMenu(props: {
               if (!authCtx.uid) {
                 await authCtx.signin();
               }
-              closeMenu()
+              closeMenu();
               await props.makeCopy({ isPrivate: true, publicRead: false });
             }}
             href={document.location.toString()}
@@ -105,7 +107,7 @@ function MakeCopyMenu(props: {
           <a
             className="dropdown-item"
             onClick={async () => {
-              closeMenu()
+              closeMenu();
               await props.makeCopy({ isPrivate: false, publicRead: true });
             }}
             href={document.location.toString()}
@@ -128,7 +130,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
   const [loadingSave, setLoadingSave] = useState<boolean>(false);
   const [firepad, setFirepad] = useState<any>(null);
   const [md, setMd] = useState<marked.Token[]>([]);
-  const [meta, setMeta] = useState<any>(null);
+  const [meta, setMeta] = useState<Notebook["meta"] | null>(null);
   const match = useRouteMatch<{ user: string; notebook: string }>();
   const location = useLocation();
   const authCtx = useAuth();
@@ -308,7 +310,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
       firebaseRef.child("meta").once(
         "value",
         function (a) {
-          setMeta(a.toJSON() || null);
+          setMeta((a.toJSON() as any) || null);
         },
         function (e) {
           console.error(e);
@@ -520,6 +522,8 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
                 </a>
               </li>
             </DropdownShare>
+
+            <span><SharingDetails meta={meta} /></span>
             <DropdownShare label="Share" className="btn-invisible">
               <li>
                 <a

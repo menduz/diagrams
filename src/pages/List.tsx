@@ -18,10 +18,8 @@ import {
   NotebookOptions,
 } from "src/firebase";
 import { closeMenu } from "src/components/Dropdown";
-
-type Notebook = {
-  meta: { title: string; uid: string };
-};
+import { Notebook } from "src/types";
+import { SharingDetails } from "src/components/SharingDetails";
 
 function ListNotebooks(props: { data: Record<string, Notebook> }) {
   return (
@@ -29,11 +27,12 @@ function ListNotebooks(props: { data: Record<string, Notebook> }) {
       {Object.keys(props.data).map(($id) => (
         <div key={$id} className="Box-row d-flex flex-items-center">
           <div className="flex-auto">
-            <strong>
+            <strong className="mr-2">
               <Link to={`/notebook/${props.data[$id].meta.uid}/${$id}`}>
                 {props.data[$id].meta.title}
               </Link>
             </strong>
+            <SharingDetails meta={props.data[$id].meta} />
             {/* <div className="text-small text-gray-light">Description</div> */}
           </div>
           <button
