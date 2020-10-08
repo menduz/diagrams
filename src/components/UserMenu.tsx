@@ -8,8 +8,103 @@ import React, {
 } from "react";
 import { useAuth } from "../Auth";
 import { closeMenu } from "./Dropdown";
-import { MarkGithubIcon } from "@primer/octicons-react";
+import { MarkGithubIcon, PlusIcon } from "@primer/octicons-react";
 import { navigateTo } from "src/Nav";
+import type { newNotebookWithContent } from "src/firebase";
+import { DEFAULT_EXAMPLE } from "src/example";
+
+declare var newNotebookTemplates: { name: string; content: string }[];
+
+export function CreateMenu(props: {
+  newNotebook: typeof newNotebookWithContent;
+}) {
+  return (
+    <>
+      <details className="dropdown details-reset details-overlay d-inline-block mr-2">
+        <summary aria-haspopup="true">
+          <PlusIcon size={16} />
+          <div className="dropdown-caret"></div>
+        </summary>
+
+        <ul className="dropdown-menu dropdown-menu-sw" style={{ width: 230 }}>
+          <li className="dropdown-header">Create notebook</li>
+          <li>
+            <a
+              className="dropdown-item"
+              href={""}
+              onClick={(e) => {
+                props.newNotebook(DEFAULT_EXAMPLE, {
+                  isPrivate: true,
+                  publicRead: false,
+                });
+                closeMenu();
+                e.preventDefault();
+                return false;
+              }}
+            >
+              <span>Private read & write</span>
+            </a>
+          </li>
+          <li>
+            <a
+              className="dropdown-item"
+              href={""}
+              onClick={(e) => {
+                props.newNotebook(DEFAULT_EXAMPLE, {
+                  isPrivate: true,
+                  publicRead: true,
+                });
+                closeMenu();
+                e.preventDefault();
+                return false;
+              }}
+            >
+              <span>Public read</span>
+            </a>
+          </li>
+          <li>
+            <a
+              className="dropdown-item"
+              href={""}
+              onClick={(e) => {
+                props.newNotebook(DEFAULT_EXAMPLE, {
+                  isPrivate: false,
+                  publicRead: true,
+                });
+                closeMenu();
+                e.preventDefault();
+                return false;
+              }}
+            >
+              <span>Public read & write</span>
+            </a>
+          </li>
+          <li className="dropdown-divider" role="separator"></li>
+          <li className="dropdown-header">From template</li>
+          {newNotebookTemplates.map(($) => (
+            <li key={$.name}>
+              <a
+                className="dropdown-item"
+                href={""}
+                onClick={(e) => {
+                  props.newNotebook($.content, {
+                    isPrivate: false,
+                    publicRead: true,
+                  });
+                  closeMenu();
+                  e.preventDefault();
+                  return false;
+                }}
+              >
+                <span>{$.name}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </>
+  );
+}
 
 export function UserMenu() {
   const auth = useAuth();
@@ -23,7 +118,6 @@ export function UserMenu() {
               className="btn btn-invisible user-name"
               style={{ color: "#000" }}
             >
-              <span className="mr-2">Anonymous</span>
               <img
                 className="avatar avatar-small"
                 alt="Anonymous"
@@ -37,6 +131,7 @@ export function UserMenu() {
           </summary>
 
           <ul className="dropdown-menu dropdown-menu-sw">
+            <li className="dropdown-header">Anonymous</li>
             <li>
               <a
                 className="dropdown-item"
@@ -66,7 +161,6 @@ export function UserMenu() {
             className="btn btn-invisible user-name"
             style={{ color: "#000" }}
           >
-            <span className="mr-2">{auth.data.user.displayName}</span>
             <img
               className="avatar avatar-small"
               alt={auth.data.user.displayName!}
@@ -80,6 +174,7 @@ export function UserMenu() {
         </summary>
 
         <ul className="dropdown-menu dropdown-menu-sw">
+          <li className="dropdown-header">{auth.data.user.displayName}</li>
           <li>
             <a
               className="dropdown-item"

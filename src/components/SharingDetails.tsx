@@ -10,12 +10,12 @@ export function SharingDetails(props: { meta: Notebook["meta"] | null }) {
     <>
       {sharing.isPrivate ? (
         <span className="Label mr-1 Label--red" title="Label: private">
-          private
+          private {sharing.publicRead ? "" : "read and"} write
         </span>
       ) : null}
       {sharing.publicRead ? (
         <span className="Label mr-1 Label--green" title="Label: public read">
-          public read
+          anyone can read {sharing.isPrivate ? "" : " and write"}
         </span>
       ) : null}
     </>

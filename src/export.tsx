@@ -12,7 +12,8 @@ function generateImage(
   original: CodeBlock,
   files: Map<string, string>,
   sectionName: string,
-  takenNames: Record<string, number>
+  takenNames: Record<string, number>,
+  assetFolder: string
 ): string {
   const sanitizedText = original
     .text!.replace(/&/g, "&amp;")
@@ -21,7 +22,7 @@ function generateImage(
 
   const slugName = slug(`fig-${sectionName}`, takenNames);
 
-  const path = `images/${slugName}.svg`;
+  const path = `${assetFolder}/${slugName}.svg`;
   files.set(path, svgContent);
 
   return `\n<!--\n\`\`\`${
@@ -33,7 +34,8 @@ async function renderCheapMd(
   $: Content,
   files: Map<string, string>,
   sectionName: string,
-  takenNames: Record<string, number>
+  takenNames: Record<string, number>,
+  assetFolder: string
 ): Promise<string> {
   if ($.type === "title") {
     switch ($.level) {
@@ -52,8 +54,20 @@ async function renderCheapMd(
     }
   } else if ($.type === "file") {
     return (
-      (await renderCheapMd($.fileName, files, sectionName, takenNames)) +
-      (await renderCheapMd($.codeBlock, files, sectionName, takenNames))
+      (await renderCheapMd(
+        $.fileName,
+        files,
+        sectionName,
+        takenNames,
+        assetFolder
+      )) +
+      (await renderCheapMd(
+        $.codeBlock,
+        files,
+        sectionName,
+        takenNames,
+        assetFolder
+      ))
     );
   } else if ($.type === "code") {
     try {
@@ -63,7 +77,8 @@ async function renderCheapMd(
           $,
           files,
           sectionName,
-          takenNames
+          takenNames,
+          assetFolder
         );
       }
       if ($.language == "sequence") {
@@ -80,7 +95,8 @@ async function renderCheapMd(
           $,
           files,
           sectionName,
-          takenNames
+          takenNames,
+          assetFolder
         );
       }
     } catch (e) {
@@ -102,6 +118,7 @@ export async function downloadZip(title: string, md: string) {
   let rendered: string[] = [];
 
   let takenNames: Record<string, number> = {};
+  const titleSlug = slug(title || "index", takenNames);
   let sectionSlug = slug(title, takenNames);
 
   for (let part of parts) {
@@ -111,11 +128,11 @@ export async function downloadZip(title: string, md: string) {
       sectionSlug = slug(part.fileName.text || "", takenNames);
     }
     rendered.push(
-      await renderCheapMd(part, files, sectionSlug, takenNames)
+      await renderCheapMd(part, files, sectionSlug, takenNames, titleSlug)
     );
   }
 
-  files.set(`${slug(title || "index", {})}.md`, rendered.join(""));
+  files.set(`${titleSlug}.md`, rendered.join(""));
 
   const zipFile = new JSZip();
 

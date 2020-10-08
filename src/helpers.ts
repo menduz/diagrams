@@ -112,11 +112,13 @@ export function slug(value: string, seen: Record<string, number>): string {
     // remove html tags
     .replace(/<[!\/a-z].*?>/gi, "")
     // remove unwanted chars
+    .replace(/\//g, "-")
     .replace(
       /[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g,
       ""
     )
-    .replace(/\s/g, "-");
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
 
   if (seen.hasOwnProperty(slug)) {
     const originalSlug = slug;

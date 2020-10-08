@@ -1,33 +1,66 @@
 <style>
-  html, body { margin: 0; padding: 0; height: 100%; transform: scale(1); transform-origin: 0 0; overflow: hidden; }
-  #loading-placeholder { width: 100vw; height: 100vh; background: #fff; }
-  #loading-placeholder span { position: relative; font-size: 16px; color: #000; top: calc(50% - 16px); left: calc(50% - 70px); }
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    transform: scale(1);
+    transform-origin: 0 0;
+    overflow: hidden;
+  }
+  #loading-placeholder {
+    width: 100vw;
+    height: 100vh;
+    background: #fff;
+  }
+  #loading-placeholder span {
+    position: relative;
+    font-size: 16px;
+    color: #000;
+    top: calc(50% - 16px);
+    left: calc(50% - 70px);
+  }
 </style>
 
-<meta name="description" content="Create sequence diagrams online in real time">
-<meta name="keywords" content="">
+<meta
+  name="description"
+  content="Create sequence diagrams online in real time"
+/>
+<meta name="keywords" content="" />
 
 <!-- Social: Facebook / Open Graph -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://diagrams.menduz.com">
-<meta property="og:title" content="Collaborative diagrams">
-<meta property="og:image" content="https://diagrams.menduz.com/cover.png">
-<meta property="og:description" content="Create sequence diagrams online in real time">
-<meta property="og:site_name" content="Collaborative diagrams">
-<meta property="og:locale" content="en_US">
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://diagrams.menduz.com" />
+<meta property="og:title" content="Collaborative diagrams" />
+<meta property="og:image" content="https://diagrams.menduz.com/cover.png" />
+<meta
+  property="og:description"
+  content="Create sequence diagrams online in real time"
+/>
+<meta property="og:site_name" content="Collaborative diagrams" />
+<meta property="og:locale" content="en_US" />
 
 <!-- Social: Twitter -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@menduz">
-<meta name="twitter:creator" content="@menduz">
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content="@menduz" />
+<meta name="twitter:creator" content="@menduz" />
 
-<meta name="twitter:title" content="Collaborative diagrams">
-<meta name="twitter:description" content="Create sequence diagrams online in real time">
-<meta name="twitter:image:src" content="https://diagrams.menduz.com/cover.png">
+<meta name="twitter:title" content="Collaborative diagrams" />
+<meta
+  name="twitter:description"
+  content="Create sequence diagrams online in real time"
+/>
+<meta
+  name="twitter:image:src"
+  content="https://diagrams.menduz.com/cover.png"
+/>
 
-<meta itemprop="name" content="Collaborative diagrams">
-<meta itemprop="description" content="Create sequence diagrams online in real time">
-<meta itemprop="image" content="https://diagrams.menduz.com/cover.png">
+<meta itemprop="name" content="Collaborative diagrams" />
+<meta
+  itemprop="description"
+  content="Create sequence diagrams online in real time"
+/>
+<meta itemprop="image" content="https://diagrams.menduz.com/cover.png" />
 
 <div id="loading-placeholder">
   <span>🦄 Loading...</span>
@@ -35,7 +68,6 @@
 
 <script>
   var globalConfig = {
-
     // please don't let me down
     firebaseConfig: {
       apiKey: "AIzaSyBhfoK4AFBLsruM0sDJ-sAFyksh4FqMpC8",
@@ -46,8 +78,40 @@
       messagingSenderId: "346071222923",
       appId: "1:346071222923:web:4d57d09e64ea7ed1ee628e",
       measurementId: "G-HLCQLCWE0G",
-    }
+    },
   };
+
+  var newNotebookTemplates = [
+    {
+      name: "ADR",
+      content: `
+# ${new Date().toISOString().substr(0, 10)} - (title)
+
+## Context and Problem Statement
+
+Describe the context and problem statement, e.g., in free form using two to three sentences. You may want to articulate the problem in form of a question.
+
+## Considered Options
+
+* option 1
+* option 2
+* option 3
+
+## Decision Outcome
+
+We choose [option 1] because [justification]
+
+## Participants
+
+- Alice
+- Bob
+- Christy
+- Doug`,
+    },
+  ];
+
+  var homepageUrl =
+    "notebook/2l3t8FEx6Yc4GyDvkdDe4EQKf2L2/-MJ9QdjuvhJ7a5LwRUb-";
 </script>
 
 <link href="index.css" rel="stylesheet" />

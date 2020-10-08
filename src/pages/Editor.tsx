@@ -12,32 +12,24 @@ import {
 import { parseMD } from "../md";
 import marked from "marked";
 import { monospaceFont } from "../diagrams";
-import { DEFAULT_EXAMPLE } from "../example";
 
 import { DropdownShare, closeMenu } from "../components/Dropdown";
 import app from "firebase/app";
 import {
-  ShareAndroidIcon,
-  LinkIcon,
   RepoForkedIcon,
   AlertIcon,
   MarkGithubIcon,
   DownloadIcon,
   MarkdownIcon,
 } from "@primer/octicons-react";
-import {
-  copyTextToClipboard,
-  generateStaticLink,
-  download,
-  slug,
-} from "../helpers";
+import { download, slug } from "../helpers";
 import UseAnimations from "react-useanimations";
 import skipBack from "react-useanimations/lib/skipBack";
 import { navigateTo } from "../Nav";
 import { useAuth, GitHubUser } from "../Auth";
 import { ResizeableSidebar } from "../components/Resize";
 import { UserList } from "../components/UserList";
-import { UserMenu } from "src/components/UserMenu";
+import { CreateMenu, UserMenu } from "src/components/UserMenu";
 import { ErrorBoundary } from "src/components/ErrorBounday";
 import { renderMarkdown } from "src/components/Markdown";
 import { downloadZip } from "src/export";
@@ -136,7 +128,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
   const authCtx = useAuth();
 
   const isOldModel = "notepadId" in match.params;
-  let isReadonly = props.readonly || isOldModel;
+  let isReadonly = props.readonly || isOldModel || !meta || !meta.uid;
 
   if (
     meta &&
@@ -209,7 +201,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
         editorRef.current.setValue("");
 
         let options: any = {
-          defaultText: DEFAULT_EXAMPLE,
+          defaultText: "# Title\n```sequence\na->b: say hi\n```",
         };
 
         if (authCtx.uid) {
@@ -256,11 +248,10 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
     }
   }, [size]);
 
-  async function makeCopy(options: NotebookOptions) {
-    const val = editorRef.current!.getValue();
-
+  async function newNotebook(content: string, options: NotebookOptions) {
     setLoadingCopy(true);
-    const { ref, succeed, owner } = await newNotebookWithContent(val, options);
+    const ret = await newNotebookWithContent(content, options);
+    const { ref, succeed, owner } = ret;
     setLoadingCopy(false);
 
     if (succeed) {
@@ -268,6 +259,13 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
       setSize(loadSize());
       navigateTo(`/notebook/${owner}/${ref.key}`);
     }
+
+    return ret;
+  }
+
+  async function makeCopy(options: NotebookOptions) {
+    const val = editorRef.current!.getValue();
+    return newNotebook(val, options);
   }
 
   let hadTitle = false;
@@ -287,23 +285,23 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
 
   const c = md.map(renderMarkdown);
 
-  function copyReadOnlyLink() {
-    copyTextToClipboard(
-      generateStaticLink(editorRef.current!.getValue()!)
-    ).then(() => {
-      editorRef.current!.focus();
-      logEvent("share_ro");
-      closeMenu();
-    });
-  }
+  // function copyReadOnlyLink() {
+  //   copyTextToClipboard(
+  //     generateStaticLink(editorRef.current!.getValue()!)
+  //   ).then(() => {
+  //     editorRef.current!.focus();
+  //     logEvent("share_ro");
+  //     closeMenu();
+  //   });
+  // }
 
-  function copyEditableLink() {
-    copyTextToClipboard(document.location.toString()).then(() => {
-      editorRef.current!.focus();
-      logEvent("share_editable");
-      closeMenu();
-    });
-  }
+  // function copyEditableLink() {
+  //   copyTextToClipboard(document.location.toString()).then(() => {
+  //     editorRef.current!.focus();
+  //     logEvent("share_editable");
+  //     closeMenu();
+  //   });
+  // }
 
   useEffect(() => {
     if (firebaseRef) {
@@ -322,6 +320,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
       if (theTitle && !isReadonly) {
         firebaseRef.child("meta/title").set(theTitle, (err) => {
           err && console.log("err, cant set meta");
+          if (err) logException(err);
         });
       }
     } else {
@@ -369,6 +368,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
                   <span
                     style={{
                       fontFamily: monospaceFont,
+                      fontWeight: "bold",
                     }}
                   >
                     {author.login}
@@ -407,7 +407,9 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
             )}
           </div>
           <div className="p-2">
-            <MakeCopyMenu loading={loadingCopy} makeCopy={makeCopy} />
+            {!authCtx.uid || !meta || authCtx.uid != meta.uid ? (
+              <MakeCopyMenu loading={loadingCopy} makeCopy={makeCopy} />
+            ) : null}
           </div>
         </div>
         <div className="editor" style={{ width: size }}>
@@ -477,8 +479,11 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
             )}
           </div>
 
-          <div className="p-2 d-flex">
+          <div className="p-2 d-flex" style={{ alignItems: "center" }}>
             <UserList documentRef={firebaseRef} />
+            <span className="ml-4">
+              <SharingDetails meta={meta} />
+            </span>
             <DropdownShare label="Export" className="btn-invisible">
               <li>
                 <a
@@ -522,19 +527,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
                 </a>
               </li>
             </DropdownShare>
-
-            <span><SharingDetails meta={meta} /></span>
-            <DropdownShare label="Share" className="btn-invisible">
-              <li>
-                <a
-                  className="dropdown-item"
-                  onClick={copyReadOnlyLink}
-                  href={document.location.toString()}
-                >
-                  <ShareAndroidIcon size={16} className="mr-2" />
-                  <span>Copy read-only link</span>
-                </a>
-              </li>
+            {/* <DropdownShare label="Share" className="btn-invisible">
               {isReadonly || (
                 <li>
                   <a
@@ -543,12 +536,13 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
                     href={document.location.toString()}
                   >
                     <LinkIcon size={16} className="mr-2" />
-                    <span>Share editable link</span>
+                    <span>Share link</span>
                   </a>
                 </li>
               )}
-            </DropdownShare>
+            </DropdownShare> */}
 
+            {authCtx.uid ? <CreateMenu newNotebook={newNotebook} /> : null}
             <UserMenu />
           </div>
         </div>

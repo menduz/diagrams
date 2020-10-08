@@ -8,10 +8,10 @@ import {
 } from "react-router-dom";
 import { history, navigateTo } from "./Nav";
 import { Editor } from "./pages/Editor";
-import { generateStaticLinkFragment } from "./helpers";
-import { DEFAULT_EXAMPLE } from "./example";
 import { ProvideAuth, useAuth } from "./Auth";
 import { List } from "./pages/List";
+
+declare var homepageUrl: string
 
 function Index() {
   const auth = useAuth();
@@ -21,7 +21,7 @@ function Index() {
   }
 
   return (
-    <Redirect to={generateStaticLinkFragment(DEFAULT_EXAMPLE) + "&open=true"} />
+    <Redirect to={homepageUrl + "?open=true"} />
   );
 }
 
