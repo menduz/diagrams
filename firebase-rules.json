@@ -4,23 +4,24 @@
       "$userid": {
         "profile": {
           ".read": true,
-          ".write": "$userid == auth.uid"
+          ".write": "$userid == auth.uid && auth.uid != null"
         },
         "notebooks": {
-          ".read": "$userid == auth.uid",
+          ".read": "$userid == auth.uid && auth.uid != null",
           "$secretid": {
             // read only by editors when sharing/isPrivate == true
             ".read": "(data.child('meta/sharing/isPrivate').exists() == false) || (data.child('meta/sharing/isPrivate').val() == false) || (data.child('meta/sharing/isPrivate').val() == true && $userid == auth.uid) || ($userid == 'anonymous') || (data.child('meta/sharing/publicRead').val() == true)",
             // write by editors || everyone if anonymous
-            ".write": "(data.child('meta/sharing/isPrivate').exists() == false) || (data.child('meta/sharing/isPrivate').val() == false) || ($userid == auth.uid) || ($userid == 'anonymous')",
+            ".write": "($userid == auth.uid && auth.uid != null || $userid == 'anonymous') && ((data.child('meta/sharing/isPrivate').exists() == false) || (data.child('meta/sharing/isPrivate').val() == false))",
             "meta": {
               "sharing": {
                 // only the owner can set the document public/private
-                ".write": "$userid == auth.uid",
+                ".write": "$userid == auth.uid && auth.uid != null",
                 ".validate": "newData.hasChildren(['isPrivate', 'publicRead'])"
               },
+              // NOTE: this should not exist. it is part of the path
               "uid": {
-                ".validate": "!data.exists()"
+                ".validate": "!data.exists() && auth.uid != null && auth.uid == newData.val()"
               },
               "title": {
                 ".validate": "newData.isString() && newData.val().length > 0"
