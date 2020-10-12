@@ -12,7 +12,7 @@
             // read only by editors when sharing/isPrivate == true
             ".read": "(data.child('meta/sharing/isPrivate').exists() == false) || (data.child('meta/sharing/isPrivate').val() == false) || (data.child('meta/sharing/isPrivate').val() == true && $userid == auth.uid) || ($userid == 'anonymous') || (data.child('meta/sharing/publicRead').val() == true)",
             // write by editors || everyone if anonymous
-            ".write": "($userid == auth.uid && auth.uid != null || $userid == 'anonymous') && ((data.child('meta/sharing/isPrivate').exists() == false) || (data.child('meta/sharing/isPrivate').val() == false))",
+            ".write": "(data.child('meta/sharing/isPrivate').exists() == false) || (data.child('meta/sharing/isPrivate').val() == false) || ($userid == auth.uid && auth.uid != null) || ($userid == 'anonymous')",
             "meta": {
               "sharing": {
                 // only the owner can set the document public/private
