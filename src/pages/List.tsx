@@ -6,7 +6,7 @@ import React, {
   useState,
   useEffect,
 } from "react";
-import { UserMenu } from "src/components/UserMenu";
+import { CreateMenu, UserMenu } from "src/components/UserMenu";
 import { useAuth } from "src/Auth";
 import app from "firebase/app";
 import { Link } from "react-router-dom";
@@ -24,29 +24,31 @@ import { SharingDetails } from "src/components/SharingDetails";
 function ListNotebooks(props: { data: Record<string, Notebook> }) {
   return (
     <div className="Box">
-      {Object.keys(props.data).map(($id) => (
-        <div key={$id} className="Box-row d-flex flex-items-center">
-          <div className="flex-auto">
-            <strong className="mr-2">
-              <Link to={`/notebook/${props.data[$id].meta.uid}/${$id}`}>
-                {props.data[$id].meta.title}
-              </Link>
-            </strong>
-            <SharingDetails meta={props.data[$id].meta} />
-            {/* <div className="text-small text-gray-light">Description</div> */}
+      {Object.keys(props.data)
+        .reverse()
+        .map(($id) => (
+          <div key={$id} className="Box-row d-flex flex-items-center">
+            <div className="flex-auto">
+              <strong className="mr-2">
+                <Link to={`/notebook/${props.data[$id].meta.uid}/${$id}`}>
+                  {props.data[$id].meta.title}
+                </Link>
+              </strong>
+              <SharingDetails meta={props.data[$id].meta} />
+              {/* <div className="text-small text-gray-light">Description</div> */}
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              name="button"
+              onClick={() => {
+                navigateTo(`/notebook/${props.data[$id].meta.uid}/${$id}`);
+              }}
+            >
+              Open
+            </button>
           </div>
-          <button
-            type="button"
-            className="btn btn-primary"
-            name="button"
-            onClick={() => {
-              navigateTo(`/notebook/${props.data[$id].meta.uid}/${$id}`);
-            }}
-          >
-            Open
-          </button>
-        </div>
-      ))}
+        ))}
     </div>
   );
 }
@@ -80,12 +82,13 @@ export function List() {
   async function newNotebook(content: string, options: NotebookOptions) {
     setCreating(true);
 
-    closeMenu();
+    if (!auth.uid) {
+      await auth.signin();
+    }
 
-    const { ref, succeed, owner } = await newNotebookWithContent(
-      content,
-      options
-    );
+    closeMenu();
+    const ret = await newNotebookWithContent(content, options);
+    const { ref, succeed, owner } = ret;
 
     setCreating(false);
 
@@ -93,6 +96,8 @@ export function List() {
       logEvent("new_notebook_list");
       navigateTo(`/notebook/${owner}/${ref.key}`);
     }
+
+    return ret;
   }
 
   return (
@@ -102,7 +107,8 @@ export function List() {
           <span className="flex-self-center">My notebooks</span>
         </div>
 
-        <div className="p-2 d-flex">
+        <div className="p-2 d-flex" style={{ alignItems: "center" }}>
+          <CreateMenu newNotebook={newNotebook} />
           <UserMenu />
         </div>
       </div>

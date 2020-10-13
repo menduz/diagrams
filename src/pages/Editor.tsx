@@ -35,6 +35,7 @@ import { renderMarkdown } from "src/components/Markdown";
 import { downloadZip } from "src/export";
 import { Notebook } from "src/types";
 import { SharingDetails } from "src/components/SharingDetails";
+import { setupMonaco } from "src/dot-monarch";
 
 declare var Firepad: any;
 declare var monaco: typeof monacoEditor;
@@ -154,7 +155,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
     }
   }, [location.search]);
 
-  const theme = isReadonly ? "vs-disabled" : "vs";
+  const theme = isReadonly ? "disabled" : "enabled";
 
   const language = "markdown";
 
@@ -179,14 +180,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
 
   useEffect(() => {
     if (editorRef.current) {
-      monaco.editor.defineTheme("vs-disabled", {
-        base: "vs",
-        inherit: true,
-        rules: [],
-        colors: {
-          "editor.background": "#eeeeee",
-        },
-      });
+      setupMonaco(monaco);
       monaco.editor.setTheme(theme);
       editorRef.current.render();
 
@@ -250,6 +244,11 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
 
   async function newNotebook(content: string, options: NotebookOptions) {
     setLoadingCopy(true);
+
+    if (!authCtx.uid) {
+      await authCtx.signin();
+    }
+
     const ret = await newNotebookWithContent(content, options);
     const { ref, succeed, owner } = ret;
     setLoadingCopy(false);
@@ -542,7 +541,7 @@ export function Editor(props: { readonly?: boolean; newModel?: boolean }) {
               )}
             </DropdownShare> */}
 
-            {authCtx.uid ? <CreateMenu newNotebook={newNotebook} /> : null}
+            <CreateMenu newNotebook={newNotebook} />
             <UserMenu />
           </div>
         </div>
