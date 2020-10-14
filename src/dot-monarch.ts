@@ -58,7 +58,7 @@ export function monarchSequence(): monacoEditor.languages.IMonarchLanguage &
         [/([Pp]articipant\s+)(@actor)$/, ["keyword", "source"]],
         [/([Tt]itle)(:)(.*)$/, ["keyword", "operators", "string"]],
         [
-          /(Note\s+)(over\s+|left of\s+|right of\s+)(@actor)(:)(.+)$/,
+          /(Note\s+)(over\s+|left of\s+|right of\s+)(@actor(?:,\s*@actor\s*)*)(:)(.+)$/,
           ["keyword", "keyword", "source", "operators", "string"],
         ],
         [
