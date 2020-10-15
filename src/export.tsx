@@ -120,6 +120,8 @@ export async function downloadZip(title: string, md: string) {
   let takenNames: Record<string, number> = {};
   const titleSlug = slug(title || "index", takenNames);
   let sectionSlug = slug(title, takenNames);
+  const assetFolder = `images/${titleSlug}`;
+  const mdFileName = `${titleSlug}.md`;
 
   for (let part of parts) {
     if (part.type == "header") {
@@ -128,11 +130,11 @@ export async function downloadZip(title: string, md: string) {
       sectionSlug = slug(part.fileName.text || "", takenNames);
     }
     rendered.push(
-      await renderCheapMd(part, files, sectionSlug, takenNames, titleSlug)
+      await renderCheapMd(part, files, sectionSlug, takenNames, assetFolder)
     );
   }
 
-  files.set(`${titleSlug}.md`, rendered.join(""));
+  files.set(mdFileName, rendered.join(""));
 
   const zipFile = new JSZip();
 
