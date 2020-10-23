@@ -101,6 +101,7 @@ function registerProtobuf(monaco: typeof monacoEditor) {
       "rpc",
       "returns",
       "return",
+      "repeated",
       "true",
       "false",
     ],
@@ -168,7 +169,7 @@ function registerProtobuf(monaco: typeof monacoEditor) {
           /[a-z_$][\w$]*/,
           {
             cases: {
-              "@typeKeywords": "typeKeyword",
+              "@typeKeywords": "keyword",
               "@keywords": "keyword",
               "@default": "identifier",
             },
