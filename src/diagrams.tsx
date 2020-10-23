@@ -92,10 +92,11 @@ function textBBox(text: string, fnt?: string) {
   if (fnt) ctx!.font = fnt;
   else ctx!.font = font;
   const r = ctx!.measureText(text);
-  return Object.assign(r, {
+  return {
+    ...r,
     height: Math.ceil(r.actualBoundingBoxDescent + r.actualBoundingBoxAscent),
-    width: Math.ceil(r.width)
-  });
+    width: Math.ceil(r.width),
+  };
 }
 
 class AssertException extends Error {
