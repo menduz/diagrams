@@ -87,7 +87,10 @@ async function renderCheapMd(
         const tmpDiagram = parseDiagram($.text!);
         processSequenceLayout(tmpDiagram);
 
-        ReactDOM.render(<RenderDiagram diagram={tmpDiagram} />, dom);
+        ReactDOM.render(
+          <RenderDiagram diagram={tmpDiagram} source={$.text!} />,
+          dom
+        );
         const x = dom.querySelector("svg");
 
         return generateImage(

@@ -93,7 +93,8 @@ function textBBox(text: string, fnt?: string) {
   else ctx!.font = font;
   const r = ctx!.measureText(text);
   return Object.assign(r, {
-    height: r.actualBoundingBoxDescent + r.actualBoundingBoxAscent,
+    height: Math.ceil(r.actualBoundingBoxDescent + r.actualBoundingBoxAscent),
+    width: Math.ceil(r.width)
   });
 }
 
@@ -431,7 +432,10 @@ function ActorSVG($: {
   );
 }
 
-export function RenderDiagram(props: { diagram: ParsedDiagram | null }) {
+export function RenderDiagram(props: {
+  diagram: ParsedDiagram | null;
+  source: string;
+}) {
   const { diagram: $ } = props;
   if (!$) return <div>Empty diagram</div>;
 
@@ -632,6 +636,7 @@ export function RenderDiagram(props: { diagram: ParsedDiagram | null }) {
         width={$.width | 0}
         height={$.height | 0}
         xmlns="http://www.w3.org/2000/svg"
+        x-original-source={props.source}
       >
         <defs>
           <marker
@@ -694,7 +699,7 @@ export function SequenceDiagram(props: { input: string; className?: string }) {
         style={{ width, height: height + 32 /* download button height */ }}
         ref={divRef}
       >
-        <RenderDiagram diagram={diagram} />
+        <RenderDiagram diagram={diagram} source={input} />
       </div>
     );
   } else {
