@@ -66,6 +66,7 @@ const ACTOR_PADDING = 10; // Padding inside a actor
 
 const SIGNAL_MARGIN = 5; // Margin around a signal
 const SIGNAL_PADDING = 5; // Padding inside a signal
+const SIGNAL_LINE_HEIGHT = 17; // Each line height
 
 const NOTE_MARGIN = 10; // Margin around a note
 const NOTE_PADDING = 5; // Padding inside a note
@@ -91,11 +92,25 @@ const ctx = can.getContext("2d");
 function textBBox(text: string, fnt?: string) {
   if (fnt) ctx!.font = fnt;
   else ctx!.font = font;
-  const r = ctx!.measureText(text);
+
+  const lines = text.split('\n');
+  let height = 0;
+  let width = 0;
+
+  for(const [index, line] of lines.entries()) {
+    const r = ctx!.measureText(line);
+
+    if (index === 0)
+      height = Math.ceil(r.actualBoundingBoxDescent + r.actualBoundingBoxAscent);
+
+    if (width < r.width)
+      width = Math.ceil(r.width);
+  }
+
   return {
-    ...r,
-    height: Math.ceil(r.actualBoundingBoxDescent + r.actualBoundingBoxAscent),
-    width: Math.ceil(r.width),
+    height,
+    width,
+    times: lines.length
   };
 }
 
@@ -175,7 +190,7 @@ export function processSequenceLayout(diagram: ParsedDiagram) {
 
     s.textBB = bb;
     s.width = bb.width;
-    s.height = bb.height;
+    s.height = bb.height + ((bb.times - 1) * SIGNAL_LINE_HEIGHT);
 
     var extraWidth = 0;
 
@@ -366,9 +381,17 @@ function Text($: {
 
   return (
     <text x={x | 0} y={y | 0} style={{ font: $.font }} textAnchor="start">
-      <tspan x={x | 0} y={y | 0}>
-        {$.text}
-      </tspan>
+      {$.text.split('\n').map(function(line, i) {
+        return i == 0 ? (
+          <tspan key={i} x={x | 0} y={y | 0}>
+            {line}
+          </tspan>
+        ) : (
+          <tspan key={i} x={x | 0} dy="1.2em">
+            {line}
+          </tspan>
+        )
+      })}
     </text>
   );
 }
@@ -680,9 +703,7 @@ export function SequenceDiagram(props: { input: string; className?: string }) {
 
   useEffect(() => {
     try {
-      const tmpDiagram = parseDiagram(
-        input.trim().replace(/^sequenceDiagram[\s\n\r]*/, "")
-      );
+      const tmpDiagram = parseDiagram(input);
       processSequenceLayout(tmpDiagram);
       setWidth(tmpDiagram.width);
       setHeight(tmpDiagram.height);
